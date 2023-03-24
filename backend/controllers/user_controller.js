@@ -1,6 +1,7 @@
 const express = require("express");
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
+const Employe = require("../models/employe");
 
 
 
@@ -73,3 +74,54 @@ exports.verifyToken = async function (req, res) {
     }
 }
 
+// add employe
+exports.addEmploye = async function (req, res) {
+    try {
+      const employe = await Employe.create(req.body);
+      res.status(201).json({ status: 201, data: employe });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  };
+  
+
+// get all employe
+exports.getAllEmploye = async function (req, res) {
+    try {
+        const employe = await Employe.find({});
+        res.status(200).json({ status: 200, data: employe });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+// delete eploye
+exports.deleteEmploye = async function (req, res) {
+    try {
+      const employe = await Employe.findByIdAndDelete(req.params.id);
+      if (!employe) {
+        res.status(404).json({ error: 'Employee not found' });
+      } else {
+        res.status(200).json({ message: 'Employee deleted successfully' });
+      }
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  };
+
+  // update employe
+  exports.updateEmploye = async function (req, res) {
+    try {
+      const employe = await Employe.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      if (!employe) {
+        res.status(404).json({ error: 'Employee not found' });
+      } else {
+        res.status(200).json({ status: 200, data: employe });
+      }
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  };
+  
+  
+  

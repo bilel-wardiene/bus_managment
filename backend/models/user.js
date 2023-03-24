@@ -25,7 +25,7 @@ var UserSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["commercial", "client", "admin"],
-      default: "commercial",
+      default: "admin",
     },
     needsAuthentication: Boolean,
     isBlocked: Boolean,
