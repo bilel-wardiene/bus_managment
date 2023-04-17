@@ -78,11 +78,12 @@ exports.verifyToken = async function (req, res) {
 exports.addEmploye = async function (req, res) {
     try {
       const employe = await Employe.create(req.body);
-      res.status(201).json({ status: 201, data: employe });
+      res.status(200).json({ status: 200, data: employe });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      res.status(400).json({ error: e.message });
     }
   };
+ 
   
 
 // get all employe
@@ -91,11 +92,11 @@ exports.getAllEmploye = async function (req, res) {
         const employe = await Employe.find({});
         res.status(200).json({ status: 200, data: employe });
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(400).json({ error: e.message });
     }
 };
 
-// delete eploye
+// delete employe
 exports.deleteEmploye = async function (req, res) {
     try {
       const employe = await Employe.findByIdAndDelete(req.params.id);
@@ -105,9 +106,25 @@ exports.deleteEmploye = async function (req, res) {
         res.status(200).json({ message: 'Employee deleted successfully' });
       }
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      res.status(400).json({ error: e.message });
     }
   };
+
+  // delete list of employe
+  exports.deleteEmployees = async function (req, res) {
+    try {
+      const employeeIds = req.body.employeeIds; // get the array of employee IDs from the request body
+      const result = await Employe.deleteMany({ _id: { $in: employeeIds } }); // delete all employees with the specified IDs
+      if (result.deletedCount === 0) {
+        res.status(404).json({ error: 'No employees were deleted' });
+      } else {
+        res.status(200).json({ message: 'Employees deleted successfully' });
+      }
+    } catch (e) {
+      res.status(400).json({ error: e.message });
+    }
+  };
+  
 
   // update employe
   exports.updateEmploye = async function (req, res) {
@@ -119,7 +136,7 @@ exports.deleteEmploye = async function (req, res) {
         res.status(200).json({ status: 200, data: employe });
       }
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      res.status(400).json({ error: e.message });
     }
   };
   

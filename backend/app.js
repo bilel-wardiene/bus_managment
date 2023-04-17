@@ -63,6 +63,7 @@ app.use(function (req, res, next) {
 app.use("/user", require("./routes/user_route"));
 app.use("/employe", require("./routes/employe_route"));
 
+app.use("/marker", require("./routes/marker_route"));
 
 app.use(function (req, res, next) {
   next(createError(404));
