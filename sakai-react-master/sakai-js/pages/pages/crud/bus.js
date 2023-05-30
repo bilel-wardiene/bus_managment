@@ -1,41 +1,50 @@
-import getConfig from 'next/config';
-import { Button } from 'primereact/button';
-import { Column } from 'primereact/column';
-import { DataTable } from 'primereact/datatable';
-import { Dialog } from 'primereact/dialog';
-import { FileUpload } from 'primereact/fileupload';
-import { InputNumber } from 'primereact/inputnumber';
-import { InputText } from 'primereact/inputtext';
-import { InputTextarea } from 'primereact/inputtextarea';
-import { RadioButton } from 'primereact/radiobutton';
-import { Rating } from 'primereact/rating';
-import { Toast } from 'primereact/toast';
-import { Toolbar } from 'primereact/toolbar';
-import { classNames } from 'primereact/utils';
-import React, { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
-import { ProductService } from '../../../demo/service/ProductService';
+import getConfig from "next/config";
+import { Button } from "primereact/button";
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import { Dialog } from "primereact/dialog";
+import { FileUpload } from "primereact/fileupload";
+import { InputNumber } from "primereact/inputnumber";
+import { MultiSelect } from 'primereact/multiselect';
+import { Dropdown } from 'primereact/dropdown';
+import { InputText } from "primereact/inputtext";
+import { InputTextarea } from "primereact/inputtextarea";
+import { RadioButton } from "primereact/radiobutton";
+import { Rating } from "primereact/rating";
+import { Toast } from "primereact/toast";
+import { Toolbar } from "primereact/toolbar";
+import { classNames } from "primereact/utils";
+import { Password } from "primereact/password";
+import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
+import { ProductService } from "../../../demo/service/ProductService";
 
 const Crud = () => {
     let emptyProduct = {
-        id: null,
-        name: '',
-        image: null,
-        description: '',
-        category: null,
-        price: 0,
-        quantity: 0,
-        rating: 0,
-        inventoryStatus: 'INSTOCK'
+        _id: "",
+        name: "",
+        itinerary: "",
+        number_places: "",
+        startingTime: "",
+        returnTime: "",
     };
-
+    const [itineraries, setItineraries] = useState([]);
+    const [markers, setMarkers] = useState([]);
+    const [name, setName] = useState("");
+    const [itinerary, setitinerary] = useState("");
+    const [number_places, setNumber_places] = useState("");
+    const [startingTime, setStartingTime] = useState("");
+    const [returnTime, setReturnTime] = useState("");
+    const [multiselectValue, setMultiselectValue] = useState(null);
+    const [dropdownValue, setDropdownValue] = useState(null);
+    const [buses, setBuses] = useState([]);
+    const [bus, setBus] = useState(emptyProduct);
     const [products, setProducts] = useState(null);
-    const [employees, setEmployees] = useState([]);
     const [productDialog, setProductDialog] = useState(false);
     const [deleteProductDialog, setDeleteProductDialog] = useState(false);
     const [deleteProductsDialog, setDeleteProductsDialog] = useState(false);
     const [product, setProduct] = useState(emptyProduct);
-    const [selectedProducts, setSelectedProducts] = useState(null);
+    const [selectedEmployees, setSelectedEmployees] = useState(null);
     const [submitted, setSubmitted] = useState(false);
     const [globalFilter, setGlobalFilter] = useState(null);
     const toast = useRef(null);
@@ -43,13 +52,147 @@ const Crud = () => {
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
 
     useEffect(() => {
+        fetchBus();
+    }, []);
+
+    const fetchBus = async () => {
+        await axios.get(
+            "http://localhost:5000/bus/getAllBus",
+        ).then(response => {
+            setBuses(response.data)
+        })
+            .catch(error => {
+                console.log(error);
+            })
+
+    };
+    useEffect(() => {
+        fetchMarkers();
+    }, []);
+
+    const fetchMarkers = async () => {
+        await axios.get(
+            "http://localhost:5000/marker/getAllMarker",
+        ).then(response => {
+            setMarkers(response.data)
+        })
+            .catch(error => {
+                console.log(error);
+            })
+
+    };
+
+    useEffect(() => {
+        fetchItineraries();
+    }, []);
+
+    const fetchItineraries = async () => {
+        await axios.get(
+            "http://localhost:5000/itinerary/getAllItinerary",
+        ).then(response => {
+            setItineraries(response.data)
+            console.log(response);
+        })
+            .catch(error => {
+                console.log(error);
+            })
+
+    };
+
+
+    const handleAddBus = async () => {
+        try {
+            setSubmitted(true);
+            const newBus = { name, itinerary, number_places, startingTime, returnTime };
+            const response = await axios.post(
+                "http://localhost:5000/bus/addBus",
+                newBus,
+            );
+            setBuses([...buses, response.data]);
+            console.log(newBus);
+            setProductDialog(false);
+            setName("");
+            setitinerary("");
+            setNumber_places("");
+
+            setStartingTime("");
+            setReturnTime("");
+            toast.current.show({
+                severity: "success",
+                summary: "Successful",
+                detail: "Bus Created",
+                life: 3000,
+            });
+        } catch (e) {
+            console.log(e);
+            if (
+                name == "" ||
+                itinerary == "" ||
+                number_places == "" ||
+
+                startingTime == "" ||
+                returnTime == ""
+            ) {
+                toast.current.show({
+                    severity: "error",
+                    summary: "error",
+                    detail: "enter data",
+                    life: "3000",
+                });
+            } else {
+                toast.current.show({
+                    severity: "error",
+                    summary: "error",
+                    detail: "itinerary exist",
+                    life: "3000",
+                });
+
+            }
+        }
+    };
+
+    const editEmploye = (bus) => {
+        setBus({ ...bus });
+        setProductDialog(true);
+    };
+
+
+    const handleUpdateItinerary = async (bus) => {
+        try {
+            const response = await axios.put(
+                `http://localhost:5000/itinerary/updateItinerary/${bus._id}`, {
+                name,
+                itinerary,
+                number_places,
+
+                startingTime,
+                returnTime,
+            }
+
+            );
+            setBus({ ...bus });
+
+            setProductDialog(true);
+            toast.current.show({
+                severity: "success",
+                summary: "Successful",
+                detail: "Bus Updated",
+                life: 3000,
+            });
+        } catch (e) {
+            console.log(e);
+            toast.current.show({
+                severity: "error",
+                summary: "error",
+                detail: "Bus not Updated",
+                life: 3000,
+            });
+        }
+    };
+    useEffect(() => {
         const productService = new ProductService();
         productService.getProducts().then((data) => setProducts(data));
     }, []);
-
-    const formatCurrency = (value) => {
-        return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-    };
 
     const openNew = () => {
         setProduct(emptyProduct);
@@ -70,69 +213,11 @@ const Crud = () => {
         setDeleteProductsDialog(false);
     };
 
-    const saveProduct = () => {
-        setSubmitted(true);
 
-        if (product.name.trim()) {
-            let _products = [...products];
-            let _product = { ...product };
-            if (product.id) {
-                const index = findIndexById(product.id);
-
-                _products[index] = _product;
-                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Product Updated', life: 3000 });
-            } else {
-                _product.id = createId();
-                _product.code = createId();
-                _product.image = 'product-placeholder.svg';
-                _products.push(_product);
-                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Product Created', life: 3000 });
-            }
-
-            setProducts(_products);
-            setProductDialog(false);
-            setProduct(emptyProduct);
-        }
-    };
-
-    const editProduct = (product) => {
-        setProduct({ ...product });
-        setProductDialog(true);
-    };
-
-    const confirmDeleteProduct = (product) => {
-        setProduct(product);
+    const confirmDeleteProduct = (bus) => {
+        console.log('hhlflldld', bus);
+        setBus(bus);
         setDeleteProductDialog(true);
-    };
-
-    const deleteProduct = async () => {
-        await axios.delete('http://localhost:5000/user/deleteEmploye/${id}');
-        let _products = employees.filter((val) => val._id !== _id);
-        setProducts(_products);
-        setDeleteProductDialog(false);
-        setProduct(emptyProduct);
-        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
-    };
-
-    const findIndexById = (id) => {
-        let index = -1;
-        for (let i = 0; i < products.length; i++) {
-            if (products[i].id === id) {
-                index = i;
-                break;
-            }
-        }
-
-        return index;
-    };
-
-    const createId = () => {
-        let id = '';
-        let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (let i = 0; i < 5; i++) {
-            id += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return id;
     };
 
     const exportCSV = () => {
@@ -140,45 +225,142 @@ const Crud = () => {
     };
 
     const confirmDeleteSelected = () => {
+
         setDeleteProductsDialog(true);
     };
 
-    const deleteSelectedProducts = () => {
-        let _products = products.filter((val) => !selectedProducts.includes(val));
-        setProducts(_products);
-        setDeleteProductsDialog(false);
-        setSelectedProducts(null);
-        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Products Deleted', life: 3000 });
+    const handleDeleteItinerary = async (id) => {
+        try {
+
+            await axios.delete(`http://localhost:5000/bus/deleteBus/${bus._id}`);
+            const updatedItineraries = buses.filter(
+                (em) => em._id !== bus._id,
+            );
+            setBuses(updatedItineraries);
+            setDeleteProductDialog(false);
+            console.log(updatedItineraries);
+            setName("");
+            setitinerary("");
+            setNumber_places("");
+
+            setStartingTime("");
+            setReturnTime("");
+
+            toast.current.show({
+                severity: "success",
+                summary: "Successful",
+                detail: "Bus Deleted",
+                life: 3000,
+            });
+        } catch (e) {
+            toast.current.show({
+                severity: "error",
+                summary: "error",
+                detail: "error ",
+                life: 3000,
+            });
+            setDeleteProductDialog(false);
+        }
     };
 
-    const onCategoryChange = (e) => {
-        let _product = { ...product };
-        _product['category'] = e.value;
-        setProduct(_product);
+    const handleDeleteEmployees = async (ids) => {
+        try {
+            const response = await axios.delete('http://localhost:5000/user/deleteEmployees', {
+                data: { ids: ids },
+            });
+            if (response.status === 200) {
+                const updatedItineraries = buses.filter((bus) => !ids.includes(bus._id));
+                setMarkers(updatedItineraries);
+                setDeleteProductDialog(false);
+                setSelectedEmployees(null);
+                setName("");
+                setitinerary("");
+                setNumber_places("");
+
+                setStartingTime("");
+                setReturnTime("");
+                toast.current.show({
+                    severity: 'success',
+                    summary: 'Successful',
+                    detail: 'Buses Deleted',
+                    life: 3000,
+                });
+            }
+        } catch (error) {
+            toast.current.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error deleting buses',
+                life: 3000,
+            });
+            setDeleteProductDialog(false);
+        }
     };
 
-    const onInputChange = (e, name) => {
-        const val = (e.target && e.target.value) || '';
-        let _product = { ...product };
-        _product[`${name}`] = val;
 
-        setProduct(_product);
+    const deleteSelectedProducts = async () => {
+
+        try {
+            const response = await axios.delete('http://localhost:5000/bus/deleteBuses', {
+                data: { BusesIds: selectedEmployees },
+            });
+
+            if (response.status === 200) {
+
+                const updatedEmployees = buses.filter((em) => !selectedEmployees.includes(em._id));
+                setBuses(updatedEmployees);
+                setDeleteProductsDialog(false);
+                setSelectedEmployees(null);
+                setName("");
+                setitinerary("");
+                setNumber_places("");
+
+                setStartingTime("");
+                setReturnTime("");
+
+                toast.current.show({
+                    severity: 'success',
+                    summary: 'Successful',
+                    detail: 'Buses Deleted',
+                    life: 3000,
+                });
+            } else {
+                toast.current.show({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Error deleting buses',
+                    life: 3000,
+                });
+                setDeleteProductsDialog(false);
+            }
+        } catch (error) {
+            
+            toast.current.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error deleting buses',
+                life: 3000,
+            });
+            setDeleteProductsDialog(false);
+        }
     };
-
-    const onInputNumberChange = (e, name) => {
-        const val = e.value || 0;
-        let _product = { ...product };
-        _product[`${name}`] = val;
-
-        setProduct(_product);
-    };
-
     const leftToolbarTemplate = () => {
         return (
             <React.Fragment>
                 <div className="my-2">
-                    <Button label="New" icon="pi pi-plus" className="p-button-success mr-2" onClick={openNew} />
-                    <Button label="Delete" icon="pi pi-trash" className="p-button-danger" onClick={confirmDeleteSelected} disabled={!selectedProducts || !selectedProducts.length} />
+                    <Button
+                        label="New"
+                        icon="pi pi-plus"
+                        className="p-button-success mr-2"
+                        onClick={openNew}
+                    />
+                    <Button
+                        label="Delete"
+                        icon="pi pi-trash"
+                        className="p-button-danger"
+                        onClick={() => confirmDeleteSelected(buses)}
+                        disabled={!selectedEmployees || !selectedEmployees.length}
+                    />
                 </div>
             </React.Fragment>
         );
@@ -187,110 +369,157 @@ const Crud = () => {
     const rightToolbarTemplate = () => {
         return (
             <React.Fragment>
-                <FileUpload mode="basic" accept="image/*" maxFileSize={1000000} label="Import" chooseLabel="Import" className="mr-2 inline-block" />
-                <Button label="Export" icon="pi pi-upload" className="p-button-help" onClick={exportCSV} />
+                <FileUpload
+                    mode="basic"
+                    accept="image/*"
+                    maxFileSize={1000000}
+                    label="Import"
+                    chooseLabel="Import"
+                    className="mr-2 inline-block"
+                />
+                <Button
+                    label="Export"
+                    icon="pi pi-upload"
+                    className="p-button-help"
+                    onClick={exportCSV}
+                />
             </React.Fragment>
         );
     };
 
-    const codeBodyTemplate = (rowData) => {
+    const number_placesBodyTemplate = (buses) => {
+
         return (
             <>
-                <span className="p-column-title">Code</span>
-                {rowData.code}
+                <span className="p-column-title">Number Of Places</span>
+                {buses.number_places}
             </>
         );
     };
 
-    const nameBodyTemplate = (rowData) => {
+    const itineraryBodyTemplate = (buses) => {
         return (
             <>
-                <span className="p-column-title">Name</span>
-                {rowData.name}
+                <span className="p-column-title">itinerary</span>
+                {buses.itinerary.name}
+
             </>
         );
     };
 
-    const imageBodyTemplate = (rowData) => {
+    const startingTimeBodyTemplate = (buses) => {
         return (
             <>
-                <span className="p-column-title">Image</span>
-                <img src={`${contextPath}/demo/images/product/${rowData.image}`} alt={rowData.image} className="shadow-2" width="100" />
+                <span className="p-column-title">startingTime</span>
+                {buses.startingTime}
             </>
         );
     };
 
-    const priceBodyTemplate = (rowData) => {
+    const returnTimeBodyTemplate = (buses) => {
         return (
             <>
-                <span className="p-column-title">Price</span>
-                {formatCurrency(rowData.price)}
+                <span className="p-column-title">returnTime</span>
+                {buses.returnTime}
             </>
         );
     };
 
-    const categoryBodyTemplate = (rowData) => {
+    const nameBodyTemplate = (buses) => {
         return (
             <>
-                <span className="p-column-title">Category</span>
-                {rowData.category}
+                <span className="p-column-title">name</span>
+                {buses.name}
             </>
         );
     };
 
-    const ratingBodyTemplate = (rowData) => {
-        return (
-            <>
-                <span className="p-column-title">Reviews</span>
-                <Rating value={rowData.rating} readOnly cancel={false} />
-            </>
-        );
-    };
 
-    const statusBodyTemplate = (rowData) => {
-        return (
-            <>
-                <span className="p-column-title">Status</span>
-                <span className={`product-badge status-${rowData.inventoryStatus.toLowerCase()}`}>{rowData.inventoryStatus}</span>
-            </>
-        );
-    };
 
-    const actionBodyTemplate = (rowData) => {
+    const actionBodyTemplate = (buses) => {
         return (
             <>
-                <Button icon="pi pi-pencil" className="p-button-rounded p-button-success mr-2" onClick={() => editProduct(rowData)} />
-                <Button icon="pi pi-trash" className="p-button-rounded p-button-warning" onClick={() => confirmDeleteProduct(rowData)} />
+                <Button
+                    icon="pi pi-pencil"
+                    className="p-button-rounded p-button-success mr-2"
+                    onClick={() => handleUpdateItinerary(buses)}
+                />
+                <Button
+                    icon="pi pi-trash"
+                    className="p-button-rounded p-button-warning"
+                    onClick={() => confirmDeleteProduct(buses)}
+                />
             </>
         );
     };
 
     const header = (
         <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
-            <h5 className="m-0">Manage Bus</h5>
+            <h5 className="m-0">Manage Buses</h5>
             <span className="block mt-2 md:mt-0 p-input-icon-left">
                 <i className="pi pi-search" />
-                <InputText type="search" onChange={(e) => setGlobalFilter(e.target.value)} placeholder="Search..." />
+                <InputText
+                    type="search"
+                    onChange={(e) => setGlobalFilter(e.target.value)}
+                    placeholder="Search..."
+                />
             </span>
         </div>
     );
 
     const productDialogFooter = (
         <>
-            <Button label="Cancel" icon="pi pi-times" className="p-button-text" onClick={hideDialog} />
-            <Button label="Save" icon="pi pi-check" className="p-button-text" onClick={saveProduct} />
+
+            <Button
+                label="Cancel"
+                icon="pi pi-times"
+                className="p-button-text"
+                onClick={hideDialog}
+            />
+            <Button
+                label="Save"
+                icon="pi pi-check"
+                className="p-button-text"
+                onClick={handleAddBus}
+            />
+
         </>
     );
-    const deleteProductDialogFooter = (
-        <>
-            <Button label="No" icon="pi pi-times" className="p-button-text" onClick={hideDeleteProductDialog} />
-            <Button label="Yes" icon="pi pi-check" className="p-button-text" onClick={deleteProduct} />
-        </>
-    );
+    const deleteProductDialogFooter =
+        (
+            <>
+                <Button
+                    label="No"
+                    icon="pi pi-times"
+                    className="p-button-text"
+                    onClick={hideDeleteProductDialog}
+                />
+                <Button
+                    label="Yes"
+                    icon="pi pi-check"
+                    className="p-button-text"
+                    onClick={
+                        handleDeleteItinerary
+                    }
+                />
+            </>
+        );
+
+
     const deleteProductsDialogFooter = (
         <>
-            <Button label="No" icon="pi pi-times" className="p-button-text" onClick={hideDeleteProductsDialog} />
-            <Button label="Yes" icon="pi pi-check" className="p-button-text" onClick={deleteSelectedProducts} />
+            <Button
+                label="No"
+                icon="pi pi-times"
+                className="p-button-text"
+                onClick={hideDeleteProductsDialog}
+            />
+            <Button
+                label="Yes"
+                icon="pi pi-check"
+                className="p-button-text"
+                onClick={deleteSelectedProducts}
+            />
         </>
     );
 
@@ -299,93 +528,214 @@ const Crud = () => {
             <div className="col-12">
                 <div className="card">
                     <Toast ref={toast} />
-                    <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
+                    <Toolbar
+                        className="mb-4"
+                        left={leftToolbarTemplate}
+                        right={rightToolbarTemplate}
+                    ></Toolbar>
 
                     <DataTable
                         ref={dt}
-                        value={products}
-                        selection={selectedProducts}
-                        onSelectionChange={(e) => setSelectedProducts(e.value)}
-                        dataKey="id"
+                        value={buses}
+                        selection={selectedEmployees}
+                        onSelectionChange={(e) => setSelectedEmployees(e.value)}
+                        dataKey="_id"
                         paginator
                         rows={10}
-                        rowsPerPageOptions={[5, 10, 25]}
+                        rowsPerPageOptions={[10, 20, 30, 40]}
                         className="datatable-responsive"
                         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} bus"
+                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} buses"
                         globalFilter={globalFilter}
-                        emptyMessage="No bus found."
+                        emptyMessage="No buses found."
                         header={header}
                         responsiveLayout="scroll"
                     >
-                         <Column selectionMode="multiple" headerStyle={{ width: '4rem' }}></Column>
-                        <Column field="name" header="Username" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '13rem' }}></Column>
-                        <Column field="name" header="Starting Point" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '13rem' }}></Column>
-                        <Column field="name" header="End Point" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '13rem' }}></Column>
-                        <Column body={actionBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
+                        <Column
+                            selectionMode="multiple"
+                            headerStyle={{ width: "4rem" }}
+                        ></Column>
+                        <Column
+                            field="name"
+                            header="Name"
+                            sortable
+                            body={nameBodyTemplate}
+                            headerStyle={{ minWidth: "9rem" }}
+                        ></Column>
+
+                        <Column
+                            field="itinerary"
+                            header="itinerary"
+                            sortable
+                            body={itineraryBodyTemplate}
+                            headerStyle={{ minWidth: "9rem" }}
+                        ></Column>
+                        <Column
+                            field="number_places"
+                            header="Number Of Places"
+                            sortable
+                            body={number_placesBodyTemplate}
+                            headerStyle={{ minWidth: "9rem" }}
+                        ></Column>
+
+                        <Column
+                            field="startingTime"
+                            header="startingTime"
+                            sortable
+                            body={startingTimeBodyTemplate}
+                            headerStyle={{ minWidth: "9rem" }}
+                        ></Column>
+                        <Column
+                            field="returnTime"
+                            header="returnTime"
+                            sortable
+                            body={returnTimeBodyTemplate}
+                            headerStyle={{ minWidth: "9rem" }}
+                        ></Column>
+
+                        <Column
+                            body={actionBodyTemplate}
+                            headerStyle={{ minWidth: "10rem" }}
+                        ></Column>
                     </DataTable>
 
-                    <Dialog visible={productDialog} style={{ width: '450px' }} header="Product Details" modal className="p-fluid" footer={productDialogFooter} onHide={hideDialog}>
-                        {product.image && <img src={`${contextPath}/demo/images/product/${product.image}`} alt={product.image} width="150" className="mt-0 mx-auto mb-5 block shadow-2" />}
+                    <Dialog
+                        visible={productDialog}
+                        style={{ width: "450px" }}
+                        header="Buses Details"
+                        modal
+                        className="p-fluid"
+                        footer={productDialogFooter}
+                        onHide={hideDialog}
+                    >
                         <div className="field">
                             <label htmlFor="name">Name</label>
-                            <InputText id="name" value={product.name} onChange={(e) => onInputChange(e, 'name')} required autoFocus className={classNames({ 'p-invalid': submitted && !product.name })} />
-                            {submitted && !product.name && <small className="p-invalid">Name is required.</small>}
+                            <InputText
+                                id="name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                                autoFocus
+                                className={classNames({ "p-invalid": submitted && !name })}
+                            />
+                            {submitted && !name && (
+                                <small className="p-invalid">name is required.</small>
+                            )}
                         </div>
                         <div className="field">
-                            <label htmlFor="description">Description</label>
-                            <InputTextarea id="description" value={product.description} onChange={(e) => onInputChange(e, 'description')} required rows={3} cols={20} />
+                            <label htmlFor="itinerary">itinerary</label>
+                            <Dropdown
+                                value={itinerary}
+                                onChange={(e) => setitinerary(e.target.value)}
+                                required
+                                className={classNames({ "p-invalid": submitted && !itinerary })}
+                                options={itineraries}
+                                optionLabel="name"
+                                placeholder="Select itineraries"
+
+                            />
+                            {submitted && !itinerary && (
+                                <small className="p-invalid">itinerary is required.</small>
+                            )}
+                        </div>
+                        <div className="field">
+                            <label htmlFor="name">number of places</label>
+                            <InputText
+                                id="number_places"
+                                value={number_places}
+                                onChange={(e) => setNumber_places(e.target.value)}
+                                required
+
+                                className={classNames({ "p-invalid": submitted && !number_places })}
+                            />
+                            {submitted && !number_places && (
+                                <small className="p-invalid">number of places is required.</small>
+                            )}
                         </div>
 
                         <div className="field">
-                            <label className="mb-3">Category</label>
-                            <div className="formgrid grid">
-                                <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category1" name="category" value="Accessories" onChange={onCategoryChange} checked={product.category === 'Accessories'} />
-                                    <label htmlFor="category1">Accessories</label>
-                                </div>
-                                <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category2" name="category" value="Clothing" onChange={onCategoryChange} checked={product.category === 'Clothing'} />
-                                    <label htmlFor="category2">Clothing</label>
-                                </div>
-                                <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category3" name="category" value="Electronics" onChange={onCategoryChange} checked={product.category === 'Electronics'} />
-                                    <label htmlFor="category3">Electronics</label>
-                                </div>
-                                <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category4" name="category" value="Fitness" onChange={onCategoryChange} checked={product.category === 'Fitness'} />
-                                    <label htmlFor="category4">Fitness</label>
-                                </div>
-                            </div>
+                            <label htmlFor="startingTime">startingTime</label>
+                            <InputText
+                                id="startingTime"
+                                value={startingTime}
+                                onChange={(e) => setStartingTime(e.target.value)}
+                                required
+                                className={classNames({ "p-invalid": submitted && !startingTime })}
+                            />
+                            {submitted && !startingTime && (
+                                <small className="p-invalid">startingTime is required.</small>
+                            )}
+                        </div>
+                        <div className="field">
+                            <label htmlFor="returnTime">returnTime</label>
+                            <InputText
+                                id="returnTime"
+                                value={returnTime}
+                                onChange={(e) => setReturnTime(e.target.value)}
+                                required
+                                className={classNames({ "p-invalid": submitted && !returnTime })}
+                            />
+                            {submitted && !returnTime && (
+                                <small className="p-invalid">returnTime is required.</small>
+                            )}
                         </div>
 
-                        <div className="formgrid grid">
-                            <div className="field col">
-                                <label htmlFor="price">Price</label>
-                                <InputNumber id="price" value={product.price} onValueChange={(e) => onInputNumberChange(e, 'price')} mode="currency" currency="USD" locale="en-US" />
-                            </div>
-                            <div className="field col">
-                                <label htmlFor="quantity">Quantity</label>
-                                <InputNumber id="quantity" value={product.quantity} onValueChange={(e) => onInputNumberChange(e, 'quantity')} integeronly />
-                            </div>
-                        </div>
+
+                        {/* <div className="field">
+                            <label htmlFor="stations">stations</label>
+                            <InputText
+                                id="stations"
+                                value={stations}
+                                onChange={(e) => setStations(e.target.value)}
+                                required
+                                className={classNames({ "p-invalid": submitted && !stations })}
+                            />
+                            {submitted && !stations && (
+                                <small className="p-invalid">stations is required.</small>
+                            )}
+                        </div> */}
+
                     </Dialog>
 
-                    <Dialog visible={deleteProductDialog} style={{ width: '450px' }} header="Confirm" modal footer={deleteProductDialogFooter} onHide={hideDeleteProductDialog}>
+                    <Dialog
+                        visible={deleteProductDialog}
+                        style={{ width: "450px" }}
+                        header="Confirm"
+                        modal
+                        footer={deleteProductDialogFooter}
+                        onHide={hideDeleteProductDialog}
+                    >
                         <div className="flex align-items-center justify-content-center">
-                            <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
+                            <i
+                                className="pi pi-exclamation-triangle mr-3"
+                                style={{ fontSize: "2rem" }}
+                            />
                             {product && (
                                 <span>
-                                    Are you sure you want to delete <b>{product.name}</b>?
+                                    Are you sure you want to delete bus?
                                 </span>
                             )}
                         </div>
                     </Dialog>
 
-                    <Dialog visible={deleteProductsDialog} style={{ width: '450px' }} header="Confirm" modal footer={deleteProductsDialogFooter} onHide={hideDeleteProductsDialog}>
+                    <Dialog
+                        visible={deleteProductsDialog}
+                        style={{ width: "450px" }}
+                        header="Confirm"
+                        modal
+                        footer={deleteProductsDialogFooter}
+                        onHide={hideDeleteProductsDialog}
+                    >
                         <div className="flex align-items-center justify-content-center">
-                            <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                            {product && <span>Are you sure you want to delete the selected products?</span>}
+                            <i
+                                className="pi pi-exclamation-triangle mr-3"
+                                style={{ fontSize: "2rem" }}
+                            />
+                            {product && (
+                                <span>
+                                    Are you sure you want to delete the selected buses?
+                                </span>
+                            )}
                         </div>
                     </Dialog>
                 </div>

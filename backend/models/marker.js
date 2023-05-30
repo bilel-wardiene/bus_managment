@@ -4,6 +4,7 @@ const markerSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
+    
   },
   description: {
     type: String,
@@ -17,6 +18,7 @@ const markerSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+
 });
 
 const Marker = mongoose.model('Marker', markerSchema);

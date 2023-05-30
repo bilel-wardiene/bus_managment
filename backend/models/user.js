@@ -13,7 +13,7 @@ var UserSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      trim: true,
+      
       required: true,
     },
     userName: {
@@ -22,6 +22,7 @@ var UserSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
+    
     role: {
       type: String,
       enum: ["commercial", "client", "admin"],

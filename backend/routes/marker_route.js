@@ -5,6 +5,7 @@ const marker_controller = require("../controllers/marker_controller");
 
 router.post("/addMarker",marker_controller.addMarker);
 router.delete("/deleteMarker/:id",marker_controller.deleteMarker);
+router.delete("/deleteMarkers", marker_controller.deleteMarkers);
 router.get("/getAllMarker",marker_controller.getAllMarkers);
 router.put("/updateMarker/:id",marker_controller.updateMarker);
 

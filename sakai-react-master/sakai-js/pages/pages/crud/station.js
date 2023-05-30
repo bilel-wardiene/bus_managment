@@ -48,10 +48,16 @@ const Crud = () => {
     }, []);
 
     const fetchMarkers = async () => {
-        const response = await axios.get(
+         await axios.get(
             "http://localhost:5000/marker/getAllMarker",
-        );
-        setMarkers(response.data.data);
+        ).then(response => {
+            setMarkers(response.data)
+        })
+        .catch(error =>{
+            console.log(error);
+        })
+        // setMarkers(response.data.data);
+        // console.log(response);
     };
 
     const handleAddEmployee = async () => {
@@ -93,7 +99,7 @@ const Crud = () => {
                 toast.current.show({
                     severity: "error",
                     summary: "error",
-                    detail: "marker exist",
+                    detail: "station exist",
                     life: "3000",
                 });
             }
@@ -123,7 +129,7 @@ const Crud = () => {
             toast.current.show({
                 severity: "success",
                 summary: "Successful",
-                detail: "Marker Updated",
+                detail: "Station Updated",
                 life: 3000,
             });
         } catch (e) {
@@ -131,7 +137,7 @@ const Crud = () => {
             toast.current.show({
                 severity: "error",
                 summary: "error",
-                detail: "Marker not Updated",
+                detail: "Station not Updated",
                 life: 3000,
             });
         }
@@ -194,7 +200,7 @@ const Crud = () => {
             toast.current.show({
                 severity: "success",
                 summary: "Successful",
-                detail: "Marker Deleted",
+                detail: "Station Deleted",
                 life: 3000,
             });
         } catch (e) {
@@ -208,50 +214,50 @@ const Crud = () => {
         }
     };
 
-    const handleDeleteEmployees = async (ids) => {
-        try {
-          const response = await axios.delete('http://localhost:5000/user/deleteEmployees', {
-            data: { ids: ids },
-          });
-          if (response.status === 200) {
-            const updatedEmployees = markers.filter((marker) => !ids.includes(marker._id));
-            setMarkers(updatedEmployees);
-            setDeleteProductDialog(false);
-            setSelectedEmployees(null);
-            setName("");
-            setDescription("");
-            setLatitude("");
-            setLongitude("");
-            toast.current.show({
-              severity: 'success',
-              summary: 'Successful',
-              detail: 'Markers Deleted',
-              life: 3000,
-            });
-          }
-        } catch (error) {
-          toast.current.show({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error deleting markers',
-            life: 3000,
-          });
-          setDeleteProductDialog(false);
-        }
-      };
-      
+    
+      const deleteSelectedProducts = async () => {
 
-    const deleteSelectedProducts = () => {
-        let em = products.filter((val) => !selectedEmployees.includes(val));
-        setEmployees(em);
-        setDeleteProductsDialog(false);
-        setSelectedEmployees(null);
-        toast.current.show({
-            severity: "success",
-            summary: "Successful",
-            detail: "Products Deleted",
-            life: 3000,
-        });
+        try {
+            const response = await axios.delete('http://localhost:5000/marker/deleteMarkers', {
+                data: { stationIds: selectedEmployees },
+            });
+
+            if (response.status === 200) {
+
+                const updatedEmployees = markers.filter((em) => !selectedEmployees.includes(em._id));
+                setMarkers(updatedEmployees);
+                setDeleteProductsDialog(false);
+                setSelectedEmployees(null);
+                setName("");
+                setDescription("");
+                setLatitude("");
+                setLongitude("");;
+
+                toast.current.show({
+                    severity: 'success',
+                    summary: 'Successful',
+                    detail: 'stations Deleted',
+                    life: 3000,
+                });
+            } else {
+                toast.current.show({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Error deleting stations',
+                    life: 3000,
+                });
+                setDeleteProductsDialog(false);
+            }
+        } catch (error) {
+            
+            toast.current.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error deleting stations',
+                life: 3000,
+            });
+            setDeleteProductsDialog(false);
+        }
     };
 
     const leftToolbarTemplate = () => {
@@ -297,36 +303,36 @@ const Crud = () => {
         );
     };
 
-    const lastnameBodyTemplate = (markers) => {
+    const longitudeBodyTemplate = (markers) => {
         return (
             <>
-                <span className="p-column-title">Name</span>
-                {markers.name}
+                <span className="p-column-title">longitude</span>
+                {markers.longitude}
             </>
         );
     };
-    const usernameBodyTemplate = (markers) => {
+    const descriptionBodyTemplate = (markers) => {
         return (
             <>
-                <span className="p-column-title">Description</span>
+                <span className="p-column-title">description</span>
                 {markers.description}
             </>
         );
     };
-    const emailBodyTemplate = (markers) => {
+    const latitudeBodyTemplate = (markers) => {
         return (
             <>
-                <span className="p-column-title">Latitude</span>
+                <span className="p-column-title">latitude</span>
                 {markers.latitude}
             </>
         );
     };
 
-    const firstnameBodyTemplate = (markers) => {
+    const nameBodyTemplate = (markers) => {
         return (
             <>
-                <span className="p-column-title">Longitude</span>
-                {markers.longitude}
+                <span className="p-column-title">name</span>
+                {markers.name}
             </>
         );
     };
@@ -440,9 +446,9 @@ const Crud = () => {
                         rowsPerPageOptions={[10, 20, 30, 40]}
                         className="datatable-responsive"
                         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} employes"
+                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} stations"
                         globalFilter={globalFilter}
-                        emptyMessage="No markers found."
+                        emptyMessage="No stations found."
                         header={header}
                         responsiveLayout="scroll"
                     >
@@ -454,28 +460,28 @@ const Crud = () => {
                             field="name"
                             header="Name"
                             sortable
-                            body={firstnameBodyTemplate}
+                            body={nameBodyTemplate}
                             headerStyle={{ minWidth: "9rem" }}
                         ></Column>
                         <Column
                             field="description"
                             header="Description"
                             sortable
-                            body={lastnameBodyTemplate}
+                            body={descriptionBodyTemplate}
                             headerStyle={{ minWidth: "9rem" }}
                         ></Column>
                         <Column
                             field="latitude"
                             header="Latitude"
                             sortable
-                            body={usernameBodyTemplate}
+                            body={latitudeBodyTemplate}
                             headerStyle={{ minWidth: "9rem" }}
                         ></Column>
                         <Column
                             field="longitude"
                             header="Longitude"
                             sortable
-                            body={emailBodyTemplate}
+                            body={longitudeBodyTemplate}
                             headerStyle={{ minWidth: "9rem" }}
                         ></Column>
 
@@ -488,7 +494,7 @@ const Crud = () => {
                     <Dialog
                         visible={productDialog}
                         style={{ width: "450px" }}
-                        header="Employes Details"
+                        header="Stations Details"
                         modal
                         className="p-fluid"
                         footer={productDialogFooter}
@@ -564,7 +570,7 @@ const Crud = () => {
                             />
                             {product && (
                                 <span>
-                                    Are you sure you want to delete ?
+                                    Are you sure you want to delete station?
                                 </span>
                             )}
                         </div>
@@ -585,7 +591,7 @@ const Crud = () => {
                             />
                             {product && (
                                 <span>
-                                    Are you sure you want to delete the selected products?
+                                    Are you sure you want to delete the selected stations?
                                 </span>
                             )}
                         </div>

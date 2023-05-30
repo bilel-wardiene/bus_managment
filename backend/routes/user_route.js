@@ -12,5 +12,6 @@ router.delete("/deleteEmploye/:id",user_controller.deleteEmploye);
 router.delete("/deleteEmployees", user_controller.deleteEmployees);
 router.put("/updateEmploye/:id",user_controller.updateEmploye);
 
+
 module.exports = router;
 

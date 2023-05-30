@@ -5,6 +5,8 @@ import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { FileUpload } from "primereact/fileupload";
 import { InputNumber } from "primereact/inputnumber";
+import { MultiSelect } from 'primereact/multiselect';
+import { Dropdown } from 'primereact/dropdown';
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { RadioButton } from "primereact/radiobutton";
@@ -12,29 +14,28 @@ import { Rating } from "primereact/rating";
 import { Toast } from "primereact/toast";
 import { Toolbar } from "primereact/toolbar";
 import { classNames } from "primereact/utils";
-import emailjs from "@emailjs/browser";
 import { Password } from "primereact/password";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { ProductService } from "../../../demo/service/ProductService";
+import Edititenerary from "./edit_itenerary";
 
 const Crud = () => {
     let emptyProduct = {
         _id: "",
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: "",
-        userName: "",
+        name: "",
+        stations: "",
+        order: "",
     };
-
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [userName, setUserName] = useState("");
-    const [employees, setEmployees] = useState([]);
-    const [employee, setEmployee] = useState(emptyProduct);
+    const [liststations, setListStations] = useState([]);
+    const [markers, setMarkers] = useState([]);
+    const [name, setName] = useState("");
+    const [stations, setStations] = useState("");
+    const [order, setOrder] = useState("");
+    const [multiselectValue, setMultiselectValue] = useState(null);
+    const [dropdownValue, setDropdownValue] = useState(null);
+    const [itineraries, setItineraries] = useState([]);
+    const [itinerary, setItinerary] = useState(emptyProduct);
     const [products, setProducts] = useState(null);
     const [productDialog, setProductDialog] = useState(false);
     const [deleteProductDialog, setDeleteProductDialog] = useState(false);
@@ -48,152 +49,110 @@ const Crud = () => {
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
 
     useEffect(() => {
-        fetchEmployees();
+        fetchItineraries();
     }, []);
 
-    const fetchEmployees = async () => {
-        const response = await axios.get(
-            "http://localhost:5000/user/getAllEmploye",
-        );
-        setEmployees(response.data.data);
+    const fetchItineraries = async () => {
+        await axios.get(
+            "http://localhost:5000/itinerary/getAllItinerary",
+        ).then(response => {
+            setItineraries(response.data)
+        })
+            .catch(error => {
+                console.log(error);
+            })
+        // setMarkers(response.data.data);
+        // console.log(response);
+    };
+    useEffect(() => {
+        fetchMarkers();
+    }, []);
+
+    const fetchMarkers = async () => {
+        await axios.get(
+            "http://localhost:5000/marker/getAllMarker",
+        ).then(response => {
+            setMarkers(response.data)
+        })
+            .catch(error => {
+                console.log(error);
+            })
+        // setMarkers(response.data.data);
+        // console.log(response);
     };
 
 
-
-    const handleAddEmployee = async () => {
+    const handleAddItinerary = async () => {
         try {
             setSubmitted(true);
-            const newEmployee = { firstName, lastName, email, userName, password };
+            const newItinerary = { name, stations:liststations};
             const response = await axios.post(
-                "http://localhost:5000/user/addEmploye",
-                newEmployee
+                "http://localhost:5000/itinerary/addItinerary",
+                newItinerary,
             );
-            setEmployees([...employees, response.data.data]);
-
-            // Send email notification
-            sendEmailNotification(newEmployee);
+            setItineraries([...itineraries, response.data]);
 
             setProductDialog(false);
-            setLastName("");
-            setFirstName("");
-            setEmail("");
-            setPassword("");
-            setUserName("");
+            setName("");
+
+            setStations("");
+            setOrder("");
             toast.current.show({
                 severity: "success",
                 summary: "Successful",
-                detail: "Employee Created",
+                detail: "Itinerary Created",
                 life: 3000,
             });
         } catch (e) {
             console.log(e);
             if (
-                userName === "" ||
-                firstName === "" ||
-                lastName === "" ||
-                email === "" ||
-                password === ""
+                name == "" ||
+
+                stations == "" ||
+                order == ""
             ) {
                 toast.current.show({
                     severity: "error",
                     summary: "error",
-                    detail: "Enter data",
+                    detail: "enter data",
                     life: "3000",
                 });
             } else {
                 toast.current.show({
                     severity: "error",
                     summary: "error",
-                    detail: "User already exists",
+                    detail: "itinerary exist",
                     life: "3000",
                 });
             }
         }
     };
 
-    const sendEmailNotification = (employee) => {
-        const templateParams = {
-            firstName: employee.firstName,
-            lastName: employee.lastName,
-            email: employee.email,
-            password: employee.password,
-            userName: employee.userName,
-        };
+    
 
-        emailjs.send(
-            'service_i89uxs8',
-            'template_xgzj0to',
-            templateParams,
-            'yvxNBLg45iiK7wPQl'
-        )
-            .then((response) => {
-                console.log('Email sent successfully:', response.text);
-            })
-            .catch((error) => {
-                console.log('Error sending email:', error.text);
-            });
+    const editEmploye = (itinerary) => {
+        setItinerary({ ...itinerary });
+        setProductDialog(true);
     };
 
 
-    const editEmploye = async () => {
-        try {
-            setSubmitted(true);
-            const updatedEmployee = { firstName, lastName, email, userName, password };
-            const response = await axios.put(
-                `http://localhost:5000/user/updateEmploye/${employee._id}`,
-                updatedEmployee
-            );
-            const updatedEmployees = employees.map((employee) =>
-                employee.id === response.data.data.id ? response.data.data : employee
-            );
-            setEmployees(updatedEmployees);
-
-            setProductDialog(false);
-            setLastName("");
-            setFirstName("");
-            setEmail("");
-            setPassword("");
-            setUserName("");
-            toast.current.show({
-                severity: "success",
-                summary: "Successful",
-                detail: "Employee Updated",
-                life: 3000,
-            });
-        } catch (e) {
-            console.log(e);
-            toast.current.show({
-                severity: "error",
-                summary: "error",
-                detail: "Failed to update employee",
-                life: "3000",
-            });
-        }
-    };
-
-
-
-
-
-    const handleUpdateEmployee = async (employee) => {
+    const handleUpdateItinerary = async (itinerary) => {
         try {
             const response = await axios.put(
-                `http://localhost:5000/user/updateEmploye/${employee._id}`, {
-                firstName,
-                lastName,
-                email,
-                password,
-                userName,
+                `http://localhost:5000/itinerary/updateItinerary/${itinerary._id}`, {
+                name,
+                stations,
+                order,
             }
 
             );
-            setEmployee({ ...employee });
+            setItinerary({ ...itinerary });
 
             setProductDialog(true);
             toast.current.show({
                 severity: "success",
                 summary: "Successful",
-                detail: "Employe Updated",
+                detail: "Itinerary Updated",
                 life: 3000,
             });
         } catch (e) {
@@ -201,7 +160,7 @@ const Crud = () => {
             toast.current.show({
                 severity: "error",
                 summary: "error",
-                detail: "Employe not Updated",
+                detail: "Itinerary not Updated",
                 life: 3000,
             });
         }
@@ -231,9 +190,9 @@ const Crud = () => {
     };
 
 
-    const confirmDeleteProduct = (employee) => {
-        console.log('hhlflldld', employee);
-        setEmployee(employee);
+    const confirmDeleteProduct = (itinerary) => {
+        console.log('hhlflldld', itinerary);
+        setItinerary(itinerary);
         setDeleteProductDialog(true);
     };
 
@@ -246,26 +205,25 @@ const Crud = () => {
         setDeleteProductsDialog(true);
     };
 
-    const handleDeleteEmployee = async (id) => {
+    const handleDeleteItinerary = async (id) => {
         try {
 
-            await axios.delete(`http://localhost:5000/user/deleteEmploye/${employee._id}`);
-            const updatedEmployees = employees.filter(
-                (em) => em._id !== employee._id,
+            await axios.delete(`http://localhost:5000/itinerary/deleteItinerary/${itinerary._id}`);
+            const updatedItineraries = itineraries.filter(
+                (em) => em._id !== itinerary._id,
             );
-            setEmployees(updatedEmployees);
+            setItineraries(updatedItineraries);
             setDeleteProductDialog(false);
-            console.log(updatedEmployees);
-            setLastName("");
-            setFirstName("");
-            setEmail("");
-            setPassword("");
-            setUserName("");
+            console.log(updatedItineraries);
+            setName("");
+
+            setStations("");
+            setOrder("");
 
             toast.current.show({
                 severity: "success",
                 summary: "Successful",
-                detail: "Employe Deleted",
+                detail: "Itinerary Deleted",
                 life: 3000,
             });
         } catch (e) {
@@ -279,52 +237,50 @@ const Crud = () => {
         }
     };
 
+  
     const deleteSelectedProducts = async () => {
 
         try {
-            const response = await axios.delete('http://localhost:5000/user/deleteEmployees', {
-                data: { employeeIds: selectedEmployees },
+            const response = await axios.delete('http://localhost:5000/itinerary/deleteItineraries', {
+                data: { ItinerariesIds: selectedEmployees },
             });
 
             if (response.status === 200) {
 
-                const updatedEmployees = employees.filter((em) => !selectedEmployees.includes(em._id));
-                setEmployees(updatedEmployees);
+                const updatedEmployees = itineraries.filter((em) => !selectedEmployees.includes(em._id));
+                setItineraries(updatedEmployees);
                 setDeleteProductsDialog(false);
                 setSelectedEmployees(null);
-                setLastName('');
-                setFirstName('');
-                setEmail('');
-                setPassword('');
-                setUserName('');
+                setName("");
+                setStations("");
+                setOrder("");
 
                 toast.current.show({
                     severity: 'success',
                     summary: 'Successful',
-                    detail: 'Employees Deleted',
+                    detail: 'itineraries Deleted',
                     life: 3000,
                 });
             } else {
                 toast.current.show({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Error deleting employees',
+                    detail: 'Error deleting itineraries',
                     life: 3000,
                 });
                 setDeleteProductsDialog(false);
             }
         } catch (error) {
-
+            
             toast.current.show({
                 severity: 'error',
                 summary: 'Error',
-                detail: 'Error deleting employees',
+                detail: 'Error deleting itineraries',
                 life: 3000,
             });
             setDeleteProductsDialog(false);
         }
     };
-
 
     const leftToolbarTemplate = () => {
         return (
@@ -340,7 +296,7 @@ const Crud = () => {
                         label="Delete"
                         icon="pi pi-trash"
                         className="p-button-danger"
-                        onClick={() => confirmDeleteSelected(employees)}
+                        onClick={() => confirmDeleteSelected(itineraries)}
                         disabled={!selectedEmployees || !selectedEmployees.length}
                     />
                 </div>
@@ -369,53 +325,55 @@ const Crud = () => {
         );
     };
 
-    const lastnameBodyTemplate = (employees) => {
+    // const startingPointBodyTemplate = (itineraries) => {
+    //     console.log(itineraries.startingPoint);
+    //     return (
+    //         <>
+    //             <span className="p-column-title">startingPoint</span>
+    //             {itineraries.startingPoint}
+    //         </>
+    //     );
+    // };
+    const orderPointBodyTemplate = (itineraries) => {
         return (
             <>
-                <span className="p-column-title">Last Name</span>
-                {employees.lastName}
+                <span className="p-column-title">order</span>
+                {itineraries.stations?.map((station,key) => (<div key={key}>{key+1}</div>))}
             </>
         );
     };
-    const usernameBodyTemplate = (employees) => {
+    const stationsBodyTemplate = (itineraries) => {
         return (
             <>
-                <span className="p-column-title">Username</span>
-                {employees.userName}
-            </>
-        );
-    };
-    const emailBodyTemplate = (employees) => {
-        return (
-            <>
-                <span className="p-column-title">Email</span>
-                {employees.email}
-            </>
-        );
-    };
-
-    const firstnameBodyTemplate = (employees) => {
-        return (
-            <>
-                <span className="p-column-title">first name</span>
-                {employees.firstName}
+                <span className="p-column-title">stations</span>
+                {itineraries.stations?.map((station,key) => (<div key={key}>-{station.name}</div>))}
             </>
         );
     };
 
+    const nameBodyTemplate = (itineraries) => {
+        return (
+            <>
+                <span className="p-column-title">name</span>
+                {itineraries.name}
+            </>
+        );
+    };
 
-    const actionBodyTemplate = (employees) => {
+
+
+    const actionBodyTemplate = (itineraries) => {
         return (
             <>
                 <Button
                     icon="pi pi-pencil"
                     className="p-button-rounded p-button-success mr-2"
-                    onClick={() => editEmploye(employees)}
+                    onClick={() => handleUpdateItinerary(itineraries)}
                 />
                 <Button
                     icon="pi pi-trash"
                     className="p-button-rounded p-button-warning"
-                    onClick={() => confirmDeleteProduct(employees)}
+                    onClick={() => confirmDeleteProduct(itineraries)}
                 />
             </>
         );
@@ -423,7 +381,7 @@ const Crud = () => {
 
     const header = (
         <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
-            <h5 className="m-0">Manage Employes</h5>
+            <h5 className="m-0">Manage Itineraries</h5>
             <span className="block mt-2 md:mt-0 p-input-icon-left">
                 <i className="pi pi-search" />
                 <InputText
@@ -437,6 +395,7 @@ const Crud = () => {
 
     const productDialogFooter = (
         <>
+          
             <Button
                 label="Cancel"
                 icon="pi pi-times"
@@ -447,8 +406,9 @@ const Crud = () => {
                 label="Save"
                 icon="pi pi-check"
                 className="p-button-text"
-                onClick={handleAddEmployee}
+                onClick={handleAddItinerary}
             />
+
         </>
     );
     const deleteProductDialogFooter =
@@ -465,7 +425,7 @@ const Crud = () => {
                     icon="pi pi-check"
                     className="p-button-text"
                     onClick={
-                        handleDeleteEmployee
+                        handleDeleteItinerary
                     }
                 />
             </>
@@ -502,7 +462,7 @@ const Crud = () => {
 
                     <DataTable
                         ref={dt}
-                        value={employees}
+                        value={itineraries}
                         selection={selectedEmployees}
                         onSelectionChange={(e) => setSelectedEmployees(e.value)}
                         dataKey="_id"
@@ -511,9 +471,9 @@ const Crud = () => {
                         rowsPerPageOptions={[10, 20, 30, 40]}
                         className="datatable-responsive"
                         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} employes"
+                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} itineraries"
                         globalFilter={globalFilter}
-                        emptyMessage="No employes found."
+                        emptyMessage="No itineraries found."
                         header={header}
                         responsiveLayout="scroll"
                     >
@@ -522,120 +482,118 @@ const Crud = () => {
                             headerStyle={{ width: "4rem" }}
                         ></Column>
                         <Column
-                            field="firstName"
-                            header="First Name"
+                            field="name"
+                            header="Name"
                             sortable
-                            body={firstnameBodyTemplate}
-                            headerStyle={{ minWidth: "9rem" }}
-                        ></Column>
-                        <Column
-                            field="lastName"
-                            header="Last Name"
-                            sortable
-                            body={lastnameBodyTemplate}
-                            headerStyle={{ minWidth: "9rem" }}
-                        ></Column>
-                        <Column
-                            field="usernName"
-                            header="Username"
-                            sortable
-                            body={usernameBodyTemplate}
-                            headerStyle={{ minWidth: "9rem" }}
-                        ></Column>
-                        <Column
-                            field="email"
-                            header="Email"
-                            sortable
-                            body={emailBodyTemplate}
+                            body={nameBodyTemplate}
                             headerStyle={{ minWidth: "9rem" }}
                         ></Column>
 
+                        <Column
+                            field="stations"
+                            header="Stations"
+                            sortable
+                            body={stationsBodyTemplate}
+                            headerStyle={{ minWidth: "9rem" }}
+                        ></Column>
+                        <Column
+                            field="order"
+                            header="Order"
+                            sortable
+                            body={orderPointBodyTemplate}
+                            headerStyle={{ minWidth: "9rem" }}
+                        ></Column>
                         <Column
                             body={actionBodyTemplate}
                             headerStyle={{ minWidth: "10rem" }}
                         ></Column>
-
                     </DataTable>
+                    <Edititenerary submitted={submitted} productDialog={productDialog} name={name} setName={setName} setStations={setListStations} stations={liststations} markers={markers} productDialogFooter={productDialogFooter} hideDialog={hideDialog} />
 
-                    <Dialog
+                    {/* <Dialog
                         visible={productDialog}
                         style={{ width: "450px" }}
-                        header="Employes Details"
+                        header="Stations Details"
                         modal
                         className="p-fluid"
                         footer={productDialogFooter}
                         onHide={hideDialog}
                     >
                         <div className="field">
-                            <label htmlFor="firstName">First name</label>
+                            <label htmlFor="name">Name</label>
                             <InputText
-                                id="firstName"
-                                value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
+                                id="name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
                                 required
                                 autoFocus
-                                className={classNames({ "p-invalid": submitted && !firstName })}
+                                className={classNames({ "p-invalid": submitted && !name })}
                             />
-                            {submitted && !firstName && (
-                                <small className="p-invalid">first name is required.</small>
+                            {submitted && !name && (
+                                <small className="p-invalid">name is required.</small>
                             )}
                         </div>
+
                         <div className="field">
-                            <label htmlFor="lastName">Last name</label>
+                            <label htmlFor="stations">stations</label>
+                            <Dropdown
+                                value={stations}
+                                onChange={(e) => setStations(e.target.value)}
+                                required
+                                className={classNames({ "p-invalid": submitted && !stations })}
+                                options={markers}
+                                optionLabel="name"
+                                placeholder="Select Stations"
+
+                            />
+                            {submitted && !stations && (
+                                <small className="p-invalid">stations is required.</small>
+                            )}
+                        </div>
+
+
+                        <div className="field">
+                            <label htmlFor="order">order</label>
                             <InputText
-                                id="lastName"
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
+                                id="order"
+                                value={order}
+                                onChange={(e) => setOrder(e.target.value)}
                                 required
-                                className={classNames({ "p-invalid": submitted && !lastName })}
+                                className={classNames({ "p-invalid": submitted && !order })}
                             />
-                            {submitted && !lastName && (
-                                <small className="p-invalid">last name is required.</small>
+                            {submitted && !order && (
+                                <small className="p-invalid">order is required.</small>
                             )}
                         </div>
-                        <div className="field">
-                            <label htmlFor="email">Email</label>
-                            <InputText
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className={classNames({ "p-invalid": submitted && !email })}
+
+                        <div>
+                            order 1
+
+                            <div className="field">
+
+                                <Dropdown
+                                    value={stations}
+                                    onChange={(e) => setStations(e.target.value)}
+                                    required
+                                    className={classNames({ "p-invalid": submitted && !stations })}
+                                    options={markers}
+                                    optionLabel="name"
+                                    placeholder="Select Stations"
+
+                                />
+                                {submitted && !stations && (
+                                    <small className="p-invalid">stations is required.</small>
+                                )}
+                            </div>
+                            <Button
+                                label="New"
+                                icon="pi pi-plus"
+                                className="p-button-success mr-2"
+                                onClick={openNew}
                             />
-                            {submitted && !email && (
-                                <small className="p-invalid">email is required.</small>
-                            )}
                         </div>
-                        <div className="field">
-                            <label htmlFor="password">Password</label>
-                            <Password
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                toggleMask
-                                className={classNames({ "p-invalid": submitted && !password })}
-                            />
-                            {submitted && !password && (
-                                <small className="p-invalid">password is required.</small>
-                            )}
-                        </div>
-                        <div className="field">
-                            <label htmlFor="userName">Username</label>
-                            <InputText
-                                id="userName"
-                                value={userName}
-                                onChange={(e) => setUserName(e.target.value)}
-                                required
-                                className={classNames({ "p-invalid": submitted && !userName })}
-                            />
-                            {submitted && !userName && (
-                                <small className="p-invalid">username is required.</small>
-                            )}
-                        </div>
-                    </Dialog>
+
+                    </Dialog> */}
 
                     <Dialog
                         visible={deleteProductDialog}
@@ -652,7 +610,7 @@ const Crud = () => {
                             />
                             {product && (
                                 <span>
-                                    Are you sure you want to delete employee?
+                                    Are you sure you want to delete itinerary ?
                                 </span>
                             )}
                         </div>
@@ -673,7 +631,7 @@ const Crud = () => {
                             />
                             {product && (
                                 <span>
-                                    Are you sure you want to delete the selected employees?
+                                    Are you sure you want to delete the selected itineraries?
                                 </span>
                             )}
                         </div>

@@ -39,6 +39,12 @@ const AppMenu = () => {
                     icon: 'pi pi-fw pi-bookmark',
                     to: '/pages/crud/station'
                 },
+
+                {
+                    label: 'Itenerary',
+                    icon: 'pi pi-fw pi-bookmark',
+                    to: '/pages/crud/itenerary'
+                },
                
                 {
                     label: 'Reservation list',

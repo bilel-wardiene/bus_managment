@@ -22,6 +22,7 @@ var EmployeSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
+    
     role: {
       type: String,
       enum: ["employe", "client", "admin"],

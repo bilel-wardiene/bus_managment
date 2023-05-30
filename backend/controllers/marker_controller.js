@@ -57,3 +57,22 @@ exports.updateMarker = async function (req, res) {
     res.status(400).json({ message: error.message });
   }
 };
+
+// Delete multiple markers
+exports.deleteMarkers =  async function (req, res) {
+  try {
+    const { stationIds } = req.body;
+  
+    // Convert employeeIds to an array if it's not already
+    const ids = Array.isArray(stationIds) ? stationIds : [stationIds];
+    
+    const result = await Marker.deleteMany({ _id: { $in: ids } });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'stations not found' });
+    }
+  
+    res.status(200).json({ message: 'stations deleted successfully' });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+};

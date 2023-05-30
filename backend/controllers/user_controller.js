@@ -1,5 +1,6 @@
 const express = require("express");
 const User = require("../models/user");
+const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const Employe = require("../models/employe");
 
@@ -73,17 +74,6 @@ exports.verifyToken = async function (req, res) {
         res.status(500).json({ error: e.message });
     }
 }
-
-// add employe
-exports.addEmploye = async function (req, res) {
-    try {
-      const employe = await Employe.create(req.body);
-      res.status(200).json({ status: 200, data: employe });
-    } catch (e) {
-      res.status(400).json({ error: e.message });
-    }
-  };
- 
   
 
 // get all employe
@@ -96,35 +86,57 @@ exports.getAllEmploye = async function (req, res) {
     }
 };
 
+
+ 
+  
+// add employe
+exports.addEmploye = async function (req, res) {
+  try {
+    const employe = await Employe.create(req.body);
+    res.status(200).json({ status: 200, data: employe });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+};
+
+
+
 // delete employe
 exports.deleteEmploye = async function (req, res) {
-    try {
-      const employe = await Employe.findByIdAndDelete(req.params.id);
-      if (!employe) {
-        res.status(404).json({ error: 'Employee not found' });
-      } else {
-        res.status(200).json({ message: 'Employee deleted successfully' });
-      }
-    } catch (e) {
-      res.status(400).json({ error: e.message });
+  try {
+    const employe = await Employe.findByIdAndDelete(req.params.id);
+    if (!employe) {
+      res.status(404).json({ error: 'Employee not found' });
+    } else {
+      res.status(200).json({ message: 'Employee deleted successfully' });
     }
-  };
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+};
 
-  // delete list of employe
-  exports.deleteEmployees = async function (req, res) {
+
+// delete employees
+exports.deleteEmployees = async function (req, res) {
     try {
-      const employeeIds = req.body.employeeIds; // get the array of employee IDs from the request body
-      const result = await Employe.deleteMany({ _id: { $in: employeeIds } }); // delete all employees with the specified IDs
-      if (result.deletedCount === 0) {
-        res.status(404).json({ error: 'No employees were deleted' });
-      } else {
-        res.status(200).json({ message: 'Employees deleted successfully' });
-      }
-    } catch (e) {
-      res.status(400).json({ error: e.message });
+    const { employeeIds } = req.body;
+
+    // Convert employeeIds to an array if it's not already
+    const ids = Array.isArray(employeeIds) ? employeeIds : [employeeIds];
+    
+    const result = await Employe.deleteMany({ _id: { $in: ids } });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Employees not found' });
     }
-  };
-  
+
+    res.status(200).json({ message: 'Employees deleted successfully' });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+};
+
+
+
 
   // update employe
   exports.updateEmploye = async function (req, res) {
@@ -139,6 +151,4 @@ exports.deleteEmploye = async function (req, res) {
       res.status(400).json({ error: e.message });
     }
   };
-  
-  
-  
+
