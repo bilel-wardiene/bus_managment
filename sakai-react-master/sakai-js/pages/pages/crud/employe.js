@@ -9,6 +9,8 @@ import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { RadioButton } from "primereact/radiobutton";
 import { Rating } from "primereact/rating";
+import { Dropdown } from 'primereact/dropdown';
+import { MultiSelect } from 'primereact/multiselect';
 import { Toast } from "primereact/toast";
 import { Toolbar } from "primereact/toolbar";
 import { classNames } from "primereact/utils";
@@ -16,6 +18,8 @@ import emailjs from "@emailjs/browser";
 import { Password } from "primereact/password";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { useRouter } from 'next/router';
+
 import { ProductService } from "../../../demo/service/ProductService";
 
 const Crud = () => {
@@ -26,9 +30,14 @@ const Crud = () => {
         email: "",
         password: "",
         userName: "",
+        itinerary: "",
+
     };
 
+    const [dropdownValue, setDropdownValue] = useState(null);
     const [firstName, setFirstName] = useState("");
+    const [itineraries, setItineraries] = useState([]);
+    const [itinerary, setitinerary] = useState("");
     const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -43,9 +52,22 @@ const Crud = () => {
     const [selectedEmployees, setSelectedEmployees] = useState(null);
     const [submitted, setSubmitted] = useState(false);
     const [globalFilter, setGlobalFilter] = useState(null);
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
+
     const toast = useRef(null);
+    
     const dt = useRef(null);
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
+
+    const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            router.push('/');
+        }
+    }, []);
 
     useEffect(() => {
         fetchEmployees();
@@ -57,60 +79,102 @@ const Crud = () => {
         );
         setEmployees(response.data.data);
     };
+    useEffect(() => {
+        fetchItineraries();
+    }, []);
+
+    const fetchItineraries = async () => {
+        await axios.get(
+            "http://localhost:5000/itinerary/getAllItinerary",
+        ).then(response => {
+            setItineraries(response.data)
+            console.log(response);
+        })
+            .catch(error => {
+                console.log(error);
+            })
+
+    };
 
 
 
     const handleAddEmployee = async () => {
         try {
-            setSubmitted(true);
-            const newEmployee = { firstName, lastName, email, userName, password };
-            const response = await axios.post(
-                "http://localhost:5000/user/addEmploye",
-                newEmployee
+          setSubmitted(true);
+          const newEmployee = { firstName, lastName, email, userName, password, itinerary };
+          
+          if (selectedEmployee) {
+            // Update employee logic
+            const updatedEmployee = {
+              ...selectedEmployee,
+              ...newEmployee
+            };
+      
+            await axios.put(
+              `http://localhost:5000/user/updateEmploye/${selectedEmployee._id}`,
+              updatedEmployee
             );
+      
+            const updatedEmployees = employees.map((employee) =>
+              employee._id === selectedEmployee._id ? updatedEmployee : employee
+            );
+      
+            setEmployees(updatedEmployees);
+          } else {
+            // Add new employee logic
+            const response = await axios.post(
+              "http://localhost:5000/user/addEmploye",
+              newEmployee
+            );
+            
             setEmployees([...employees, response.data.data]);
-
-            // Send email notification
-            sendEmailNotification(newEmployee);
-
-            setProductDialog(false);
-            setLastName("");
-            setFirstName("");
-            setEmail("");
-            setPassword("");
-            setUserName("");
-            toast.current.show({
-                severity: "success",
-                summary: "Successful",
-                detail: "Employee Created",
-                life: 3000,
-            });
+          }
+      
+          // Send email notification
+          sendEmailNotification(newEmployee);
+      
+          setProductDialog(false);
+          setLastName("");
+          setFirstName("");
+          setEmail("");
+          setPassword("");
+          setUserName("");
+          setitinerary("");
+          setSelectedEmployee(null);
+      
+          toast.current.show({
+            severity: "success",
+            summary: "Successful",
+            detail: selectedEmployee ? "Employee Updated" : "Employee Created",
+            life: 3000,
+          });
         } catch (e) {
-            console.log(e);
-            if (
-                userName === "" ||
-                firstName === "" ||
-                lastName === "" ||
-                email === "" ||
-                password === ""
-            ) {
-                toast.current.show({
-                    severity: "error",
-                    summary: "error",
-                    detail: "Enter data",
-                    life: "3000",
-                });
-            } else {
-                toast.current.show({
-                    severity: "error",
-                    summary: "error",
-                    detail: "User already exists",
-                    life: "3000",
-                });
-            }
+          console.log(e);
+          if (
+            userName === "" ||
+            firstName === "" ||
+            lastName === "" ||
+            email === "" ||
+            password === "" ||
+            itinerary === ""
+          ) {
+            toast.current.show({
+              severity: "error",
+              summary: "error",
+              detail: "Enter data",
+              life: "3000",
+            });
+          } else {
+            toast.current.show({
+              severity: "error",
+              summary: "error",
+              detail: "User already exists",
+              life: "3000",
+            });
+          }
         }
-    };
-
+      };
+      
     const sendEmailNotification = (employee) => {
         const templateParams = {
             firstName: employee.firstName,
@@ -135,83 +199,28 @@ const Crud = () => {
     };
 
 
-    const editEmploye = async () => {
-        try {
-            setSubmitted(true);
-            const updatedEmployee = { firstName, lastName, email, userName, password };
-            const response = await axios.put(
-                `http://localhost:5000/user/updateEmploye/${employee._id}`,
-                updatedEmployee
-            );
-            const updatedEmployees = employees.map((employee) =>
-                employee.id === response.data.data.id ? response.data.data : employee
-            );
-            setEmployees(updatedEmployees);
-
-            setProductDialog(false);
-            setLastName("");
-            setFirstName("");
-            setEmail("");
-            setPassword("");
-            setUserName("");
-            toast.current.show({
-                severity: "success",
-                summary: "Successful",
-                detail: "Employee Updated",
-                life: 3000,
-            });
-        } catch (e) {
-            console.log(e);
-            toast.current.show({
-                severity: "error",
-                summary: "error",
-                detail: "Failed to update employee",
-                life: "3000",
-            });
-        }
-    };
+ 
 
 
 
-
-
-    const handleUpdateEmployee = async (employee) => {
-        try {
-            const response = await axios.put(
-                `http://localhost:5000/user/updateEmploye/${employee._id}`, {
-                firstName,
-                lastName,
-                email,
-                password,
-                userName,
-            }
-
-            );
-            setEmployee({ ...employee });
-
-            setProductDialog(true);
-            toast.current.show({
-                severity: "success",
-                summary: "Successful",
-                detail: "Employe Updated",
-                life: 3000,
-            });
-        } catch (e) {
-            console.log(e);
-            toast.current.show({
-                severity: "error",
-                summary: "error",
-                detail: "Employe not Updated",
-                life: 3000,
-            });
-        }
-    };
+    const handleUpdateEmployee = (employee) => {
+        setSelectedEmployee(employee);
+        setFirstName(employee.firstName);
+        setLastName(employee.lastName);
+        setEmail(employee.email);
+        setUserName(employee.userName);
+        setPassword(employee.password);
+        setitinerary(employee.itinerary);
+        setProductDialog(true);
+      };
+      
     useEffect(() => {
         const productService = new ProductService();
         productService.getProducts().then((data) => setProducts(data));
     }, []);
 
     const openNew = () => {
+        setSelectedEmployee(null);
         setProduct(emptyProduct);
         setSubmitted(false);
         setProductDialog(true);
@@ -261,6 +270,8 @@ const Crud = () => {
             setEmail("");
             setPassword("");
             setUserName("");
+            setitinerary("");
+
 
             toast.current.show({
                 severity: "success",
@@ -297,6 +308,7 @@ const Crud = () => {
                 setEmail('');
                 setPassword('');
                 setUserName('');
+                setitinerary("");
 
                 toast.current.show({
                     severity: 'success',
@@ -385,6 +397,21 @@ const Crud = () => {
             </>
         );
     };
+
+  
+    const itineraryBodyTemplate = (employees) => {
+        if (employees.itinerary) {
+          return (
+            <>
+              <span className="p-column-title">itinerary</span>
+              {employees.itinerary.name}
+            </>
+          );
+        } else {
+          return null; // Handle the case when itinerary is null or undefined
+        }
+      };
+
     const emailBodyTemplate = (employees) => {
         return (
             <>
@@ -410,7 +437,7 @@ const Crud = () => {
                 <Button
                     icon="pi pi-pencil"
                     className="p-button-rounded p-button-success mr-2"
-                    onClick={() => editEmploye(employees)}
+                    onClick={() => handleUpdateEmployee(employees)}
                 />
                 <Button
                     icon="pi pi-trash"
@@ -549,6 +576,13 @@ const Crud = () => {
                             body={emailBodyTemplate}
                             headerStyle={{ minWidth: "9rem" }}
                         ></Column>
+                        <Column
+                            field="itinerary"
+                            header="itinerary"
+                            sortable
+                            body={itineraryBodyTemplate}
+                            headerStyle={{ minWidth: "9rem" }}
+                        ></Column>
 
                         <Column
                             body={actionBodyTemplate}
@@ -635,6 +669,23 @@ const Crud = () => {
                                 <small className="p-invalid">username is required.</small>
                             )}
                         </div>
+                        <div className="field">
+                            <label htmlFor="itinerary">itinerary</label>
+                            <MultiSelect
+                                value={itinerary}
+                                onChange={(e) => setitinerary(e.target.value)}
+                                options={itineraries}
+                                optionLabel="name"
+                                placeholder="Select itineraries"
+                                filter
+                                display="chip"
+                                 />
+                            {submitted && !itinerary && (
+                                <small className="p-invalid">itinerary is required.</small>
+                            )}
+                        </div>
+
+
                     </Dialog>
 
                     <Dialog

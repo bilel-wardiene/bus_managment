@@ -79,20 +79,38 @@ exports.verifyToken = async function (req, res) {
 // get all employe
 exports.getAllEmploye = async function (req, res) {
     try {
-        const employe = await Employe.find({});
+        const employe = await Employe.find().populate({
+          path : "itinerary",
+        });
         res.status(200).json({ status: 200, data: employe });
     } catch (e) {
         res.status(400).json({ error: e.message });
     }
 };
 
+// get itinerary for a specific employee
+exports.getEmployeeItinerary = async function (req, res) {
+  const { employeeId } = req.params;
 
- 
+  try {
+    const employee = await Employe.findById(employeeId).select("itinerary");
+    
+    if (!employee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    res.status(200).json({ status: 200, data: employee.itinerary });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+};
+
   
 // add employe
 exports.addEmploye = async function (req, res) {
   try {
     const employe = await Employe.create(req.body);
+    console.log("dldldldldl", req.body);
     res.status(200).json({ status: 200, data: employe });
   } catch (e) {
     res.status(400).json({ error: e.message });

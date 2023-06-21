@@ -23,6 +23,7 @@ var UserSchema = new mongoose.Schema(
       lowercase: true,
     },
     
+    
     role: {
       type: String,
       enum: ["commercial", "client", "admin"],

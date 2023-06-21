@@ -17,6 +17,8 @@ import { classNames } from "primereact/utils";
 import { Password } from "primereact/password";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { useRouter } from 'next/router';
+
 import { ProductService } from "../../../demo/service/ProductService";
 
 const Crud = () => {
@@ -49,7 +51,18 @@ const Crud = () => {
     const [globalFilter, setGlobalFilter] = useState(null);
     const toast = useRef(null);
     const dt = useRef(null);
+    const [selectedBus, setSelectedBus] = useState(null);
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
+
+    const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            router.push('/');
+        }
+    }, []);
 
     useEffect(() => {
         fetchBus();
@@ -102,60 +115,112 @@ const Crud = () => {
 
     const handleAddBus = async () => {
         try {
-            setSubmitted(true);
-            const newBus = { name, itinerary, number_places, startingTime, returnTime };
-            const response = await axios.post(
-                "http://localhost:5000/bus/addBus",
-                newBus,
+          setSubmitted(true);
+      
+          if (selectedBus) {
+            // Update bus logic
+            const updatedBus = {
+              ...selectedBus,
+              name,
+              itinerary,
+              number_places,
+              startingTime,
+              returnTime
+            };
+      
+            await axios.put(
+              `http://localhost:5000/bus/updateBus/${selectedBus._id}`,
+              updatedBus
             );
-            setBuses([...buses, response.data]);
-            console.log(newBus);
+      
+            const updatedBuses = buses.map((bus) =>
+              bus._id === selectedBus._id ? updatedBus : bus
+            );
+      
+            setBuses(updatedBuses);
             setProductDialog(false);
-            setName("");
-            setitinerary("");
-            setNumber_places("");
-
-            setStartingTime("");
-            setReturnTime("");
             toast.current.show({
-                severity: "success",
-                summary: "Successful",
-                detail: "Bus Created",
-                life: 3000,
+              severity: "success",
+              summary: "Successful",
+              detail: "Bus Updated",
+              life: 3000
             });
+          } else {
+            // Add new bus logic
+            const newBus = {
+              name,
+              itinerary,
+              number_places,
+              startingTime,
+              returnTime
+            };
+      
+            const response = await axios.post(
+              "http://localhost:5000/bus/addBus",
+              newBus
+            );
+      
+            setBuses([...buses, response.data]);
+            setProductDialog(false);
+            toast.current.show({
+              severity: "success",
+              summary: "Successful",
+              detail: "Bus Created",
+              life: 3000
+            });
+          }
+      
+          // Reset form fields
+          setName("");
+          setitinerary("");
+          setNumber_places("");
+          setStartingTime("");
+          setReturnTime("");
+          setSelectedBus(null);
+          setSubmitted(false);
         } catch (e) {
-            console.log(e);
-            if (
-                name == "" ||
-                itinerary == "" ||
-                number_places == "" ||
-
-                startingTime == "" ||
-                returnTime == ""
-            ) {
-                toast.current.show({
-                    severity: "error",
-                    summary: "error",
-                    detail: "enter data",
-                    life: "3000",
-                });
-            } else {
-                toast.current.show({
-                    severity: "error",
-                    summary: "error",
-                    detail: "itinerary exist",
-                    life: "3000",
-                });
-
-            }
+          console.log(e);
+          if (
+            name === "" ||
+            itinerary === "" ||
+            number_places === "" ||
+            startingTime === "" ||
+            returnTime === ""
+          ) {
+            toast.current.show({
+              severity: "error",
+              summary: "Error",
+              detail: "Enter all data",
+              life: 3000
+            });
+          } else {
+            toast.current.show({
+              severity: "error",
+              summary: "Error",
+              detail: "Itinerary already exists",
+              life: 3000
+            });
+          }
         }
-    };
+      };
 
     const editEmploye = (bus) => {
         setBus({ ...bus });
         setProductDialog(true);
     };
 
+
+  
+const handleUpdateBus = (bus) => {
+    setSelectedBus(bus);
+    setName(bus.name);
+    setitinerary(bus.itinerary);
+    setNumber_places(bus.number_places);
+    setStartingTime(bus.startingTime);
+    setReturnTime(bus.returnTime);
+    setProductDialog(true);
+  };
+      
 
     const handleUpdateItinerary = async (bus) => {
         try {
@@ -195,11 +260,11 @@ const Crud = () => {
     }, []);
 
     const openNew = () => {
+        setSelectedBus(null);
         setProduct(emptyProduct);
         setSubmitted(false);
         setProductDialog(true);
-    };
-
+      };
     const hideDialog = () => {
         setSubmitted(false);
         setProductDialog(false);
@@ -263,39 +328,7 @@ const Crud = () => {
         }
     };
 
-    const handleDeleteEmployees = async (ids) => {
-        try {
-            const response = await axios.delete('http://localhost:5000/user/deleteEmployees', {
-                data: { ids: ids },
-            });
-            if (response.status === 200) {
-                const updatedItineraries = buses.filter((bus) => !ids.includes(bus._id));
-                setMarkers(updatedItineraries);
-                setDeleteProductDialog(false);
-                setSelectedEmployees(null);
-                setName("");
-                setitinerary("");
-                setNumber_places("");
-
-                setStartingTime("");
-                setReturnTime("");
-                toast.current.show({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Buses Deleted',
-                    life: 3000,
-                });
-            }
-        } catch (error) {
-            toast.current.show({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'Error deleting buses',
-                life: 3000,
-            });
-            setDeleteProductDialog(false);
-        }
-    };
+  
 
 
     const deleteSelectedProducts = async () => {
@@ -398,15 +431,18 @@ const Crud = () => {
     };
 
     const itineraryBodyTemplate = (buses) => {
-        return (
+        if (buses.itinerary) {
+          return (
             <>
-                <span className="p-column-title">itinerary</span>
-                {buses.itinerary.name}
-
+              <span className="p-column-title">itinerary</span>
+              {buses.itinerary.name}
             </>
-        );
-    };
-
+          );
+        } else {
+          return null; // Handle the case when itinerary is null or undefined
+        }
+      };
+      
     const startingTimeBodyTemplate = (buses) => {
         return (
             <>
@@ -442,7 +478,7 @@ const Crud = () => {
                 <Button
                     icon="pi pi-pencil"
                     className="p-button-rounded p-button-success mr-2"
-                    onClick={() => handleUpdateItinerary(buses)}
+                    onClick={() => handleUpdateBus(buses)}
                 />
                 <Button
                     icon="pi pi-trash"
@@ -581,12 +617,14 @@ const Crud = () => {
                         <Column
                             field="startingTime"
                             header="startingTime"
+                            
                             sortable
                             body={startingTimeBodyTemplate}
                             headerStyle={{ minWidth: "9rem" }}
                         ></Column>
                         <Column
                             field="returnTime"
+                            
                             header="returnTime"
                             sortable
                             body={returnTimeBodyTemplate}
@@ -657,6 +695,7 @@ const Crud = () => {
                             <label htmlFor="startingTime">startingTime</label>
                             <InputText
                                 id="startingTime"
+                                type="datetime-local"
                                 value={startingTime}
                                 onChange={(e) => setStartingTime(e.target.value)}
                                 required
@@ -670,6 +709,7 @@ const Crud = () => {
                             <label htmlFor="returnTime">returnTime</label>
                             <InputText
                                 id="returnTime"
+                                type="datetime-local"
                                 value={returnTime}
                                 onChange={(e) => setReturnTime(e.target.value)}
                                 required

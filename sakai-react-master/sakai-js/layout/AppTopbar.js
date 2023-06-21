@@ -1,5 +1,7 @@
 import getConfig from 'next/config';
 import Link from 'next/link';
+
+
 import Router, { useRouter } from 'next/router';
 import { classNames } from 'primereact/utils';
 import React, { forwardRef, useContext, useImperativeHandle, useRef } from 'react';
@@ -40,10 +42,17 @@ const AppTopbar = forwardRef((props, ref) => {
                     <span>Profile</span>
                 </button>
                 <Link href="/">
-                    <button type="button" className="p-link layout-topbar-button">
-                        <i className="pi pi-sign-out"></i>
-                        <span>Log out</span>
-                    </button>
+                <button 
+    type="button" 
+    className="p-link layout-topbar-button"
+    onClick={() => {
+        localStorage.removeItem('token');
+        Router.push('/');
+    }}
+>
+    <i className="pi pi-sign-out"></i>
+    <span>Log out</span>
+</button>
                 </Link>
             </div>
         </div>

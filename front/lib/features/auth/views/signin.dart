@@ -12,7 +12,7 @@ import 'package:front/features/auth/authenticate_bloc/authenticate_event.dart';
 import 'package:front/features/auth/authenticate_bloc/authenticate_state.dart';
 import 'package:front/features/auth/data/user_model.dart';
 import 'package:front/features/auth/data/user_repository.dart';
-import 'package:front/features/auth/views/contact.dart';
+import 'package:front/features/auth/views/Bottom_bar.dart';
 import 'package:front/features/auth/views/widgets/textField_email.dart';
 import 'package:front/features/auth/views/widgets/textField_password.dart';
 import 'package:jwt_decode/jwt_decode.dart';

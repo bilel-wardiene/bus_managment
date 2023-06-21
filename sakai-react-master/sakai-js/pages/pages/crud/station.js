@@ -6,6 +6,8 @@ import { Dialog } from "primereact/dialog";
 import { FileUpload } from "primereact/fileupload";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
+import { useRouter } from 'next/router';
+
 import { InputTextarea } from "primereact/inputtextarea";
 import { RadioButton } from "primereact/radiobutton";
 import { Rating } from "primereact/rating";
@@ -43,6 +45,18 @@ const Crud = () => {
     const dt = useRef(null);
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
 
+    const [selectedStation, setSelectedStation] = useState(null);
+
+
+    const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            router.push('/');
+        }
+    }, []);
     useEffect(() => {
         fetchMarkers();
     }, []);
@@ -60,51 +74,78 @@ const Crud = () => {
         // console.log(response);
     };
 
-    const handleAddEmployee = async () => {
+    const handleAddStation = async () => {
         try {
-            setSubmitted(true);
-            const newMarker = { name, description, latitude, longitude};
-            const response = await axios.post(
-                "http://localhost:5000/marker/addMarker",
-                newMarker,
+          setSubmitted(true);
+          const newMarker = { name, description, latitude, longitude };
+      
+          if (selectedStation) {
+            // Update station logic
+            await axios.put(
+              `http://localhost:5000/marker/updateMarker/${selectedStation._id}`,
+              newMarker
             );
-            setMarkers([...markers, response.data.data]);
-
-            setProductDialog(false);
-            setName("");
-            setDescription("");
-            setLatitude("");
-            setLongitude("");
+      
+            const updatedMarkers = markers.map((marker) =>
+              marker._id === selectedStation._id ? { ...marker, ...newMarker } : marker
+            );
+            setMarkers(updatedMarkers);
+      
             toast.current.show({
-                severity: "success",
-                summary: "Successful",
-                detail: "Station Created",
-                life: 3000,
+              severity: "success",
+              summary: "Successful",
+              detail: "Station Updated",
+              life: 3000,
             });
-        } catch (e) {
-            console.log(e);
-            if (
-                name == "" ||
-                description == "" ||
-                latitude == "" ||
-                longitude == "" 
-            ) {
-                toast.current.show({
-                    severity: "error",
-                    summary: "error",
-                    detail: "enter data",
-                    life: "3000",
-                });
-            } else {
-                toast.current.show({
-                    severity: "error",
-                    summary: "error",
-                    detail: "station exist",
-                    life: "3000",
-                });
-            }
+          } else {
+            // Add new station logic
+            const response = await axios.post(
+              "http://localhost:5000/marker/addMarker",
+              newMarker
+            );
+      
+            setMarkers([...markers, response.data.data]);
+      
+            toast.current.show({
+              severity: "success",
+              summary: "Successful",
+              detail: "Station Created",
+              life: 3000,
+            });
+          }
+      
+          setProductDialog(false);
+          setName("");
+          setDescription("");
+          setLatitude("");
+          setLongitude("");
+          setSelectedStation(null);
+          setSubmitted(false);
+        } catch (error) {
+          console.log(error);
+          if (
+            name === "" ||
+            description === "" ||
+            latitude === "" ||
+            longitude === ""
+          ) {
+            toast.current.show({
+              severity: "error",
+              summary: "Error",
+              detail: "Please enter all the required data",
+              life: 3000,
+            });
+          } else {
+            toast.current.show({
+              severity: "error",
+              summary: "Error",
+              detail: "Station already exists",
+              life: 3000,
+            });
+          }
         }
-    };
+      };
+      
  
     const editEmploye = (marker) => {
         setMarker({ ...marker });
@@ -112,42 +153,22 @@ const Crud = () => {
     };
   
 
-    const handleUpdateEmployee = async (marker) => {
-        try {
-            const response = await axios.put(
-                `http://localhost:5000/user/updateEmploye/${marker._id}`,{
-                    name,
-                    description,
-                    latitude,
-                    longitude,
-                  }
-                
-            );
-            setMarker({ ...marker });
-            
-            setProductDialog(true);
-            toast.current.show({
-                severity: "success",
-                summary: "Successful",
-                detail: "Station Updated",
-                life: 3000,
-            });
-        } catch (e) {
-            console.log(e);
-            toast.current.show({
-                severity: "error",
-                summary: "error",
-                detail: "Station not Updated",
-                life: 3000,
-            });
-        }
-    };
+    const handleUpdateStation = (station) => {
+        setSelectedStation(station);
+        setName(station.name);
+        setDescription(station.description);
+        setLatitude(station.latitude);
+        setLongitude(station.longitude);
+        setProductDialog(true);
+      };
+      
     useEffect(() => {
         const productService = new ProductService();
         productService.getProducts().then((data) => setProducts(data));
     }, []);
 
     const openNew = () => {
+        setSelectedStation(null);
         setProduct(emptyProduct);
         setSubmitted(false);
         setProductDialog(true);
@@ -304,38 +325,58 @@ const Crud = () => {
     };
 
     const longitudeBodyTemplate = (markers) => {
-        return (
+        if (markers && markers.longitude !== undefined) {
+          return (
             <>
-                <span className="p-column-title">longitude</span>
-                {markers.longitude}
+              <span className="p-column-title">longitude</span>
+              {markers.longitude}
             </>
-        );
-    };
+          );
+        } else {
+          return null; // Handle the case when markers is undefined or does not have a longitude property
+        }
+      };
+      
     const descriptionBodyTemplate = (markers) => {
-        return (
+        if (markers && markers.description) {
+          return (
             <>
-                <span className="p-column-title">description</span>
-                {markers.description}
+              <span className="p-column-title">description</span>
+              {markers.description}
             </>
-        );
-    };
-    const latitudeBodyTemplate = (markers) => {
-        return (
+          );
+        } else {
+          return null; // Handle the case when markers is undefined or does not have a description property
+        }
+      };
+      
+      const latitudeBodyTemplate = (markers) => {
+        if (markers && markers.latitude !== undefined) {
+          return (
             <>
-                <span className="p-column-title">latitude</span>
-                {markers.latitude}
+              <span className="p-column-title">latitude</span>
+              {markers.latitude}
             </>
-        );
-    };
+          );
+        } else {
+          return null; // Handle the case when markers is undefined or does not have a latitude property
+        }
+      };
+      
 
     const nameBodyTemplate = (markers) => {
-        return (
+        if (markers && markers.name) {
+          return (
             <>
-                <span className="p-column-title">name</span>
-                {markers.name}
+              <span className="p-column-title">name</span>
+              {markers.name}
             </>
-        );
-    };
+          );
+        } else {
+          return null; // Handle the case when markers is undefined or does not have a name property
+        }
+      };
+      
    
  
 
@@ -345,7 +386,7 @@ const Crud = () => {
                 <Button
                     icon="pi pi-pencil"
                     className="p-button-rounded p-button-success mr-2"
-                    onClick={() => handleUpdateEmployee(markers)}
+                    onClick={() => handleUpdateStation(markers)}
                 />
                 <Button
                     icon="pi pi-trash"
@@ -382,7 +423,7 @@ const Crud = () => {
                 label="Save"
                 icon="pi pi-check"
                 className="p-button-text"
-                onClick={handleAddEmployee}
+                onClick={handleAddStation}
             />
         </>
     );

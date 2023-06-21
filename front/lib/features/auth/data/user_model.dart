@@ -1,3 +1,5 @@
+import 'package:front/features/Reservation/data/models/itinerary_model.dart';
+
 class User {
   String? token;
   String? id;
@@ -11,22 +13,25 @@ class User {
   String? createdAt;
   String? updatedAt;
   int? V;
+  List<ItineraryModel>? itineraries; 
 
-  User(
-      {this.token,
-      this.id,
-      this.firstName,
-      this.lastName,
-      this.email,
-      this.userName,
-      this.role,
-      this.hashedPassword,
-      this.salt,
-      this.createdAt,
-      this.updatedAt,
-      this.V});
+  User({
+    this.token,
+    this.id,
+    this.firstName,
+    this.lastName,
+    this.email,
+    this.userName,
+    this.role,
+    this.hashedPassword,
+    this.salt,
+    this.createdAt,
+    this.updatedAt,
+    this.V,
+    this.itineraries,
+  });
 
-   User.fromJson(Map<String, dynamic> json) {
+  User.fromJson(Map<String, dynamic> json) {
     token = json['token'];
     id = json['_id'];
     firstName = json['firstName'];
@@ -39,6 +44,11 @@ class User {
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     V = json['__v'];
+    if (json['itineraries'] != null) {
+      itineraries = List<ItineraryModel>.from(
+        json['itineraries'].map((itinerary) => ItineraryModel.fromJson(itinerary)),
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -55,6 +65,9 @@ class User {
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
     data['__v'] = this.V;
+    if (this.itineraries != null) {
+      data['itineraries'] = this.itineraries!.map((itinerary) => itinerary.toJson()).toList();
+    }
     return data;
   }
 }

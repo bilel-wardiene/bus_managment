@@ -2,9 +2,11 @@ import 'package:badges/badges.dart' as badges;
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:front/features/auth/views/asla.dart';
+import 'package:front/features/Reservation/views/first_screen.dart';
+import 'package:front/features/Reservation/views/reservation.dart';
+
 import 'package:front/features/auth/views/home.dart';
-import 'package:front/features/auth/views/reservation.dart';
+
 
 class Contact extends StatefulWidget {
   const Contact({super.key});
@@ -21,10 +23,7 @@ class _ContactState extends State<Contact> {
     //const HomeScreen(),
     //const AccountScreen(),
     const Home(),
-    const Reservation(),
-    const Center(
-      child: Text("two page"),
-    ),
+    const FirstScreen(),
     const Center(
       child: Text("three page"),
     ),
@@ -43,10 +42,10 @@ class _ContactState extends State<Contact> {
       body: pages[_page],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _page,
-        selectedItemColor: Colors.cyan,
-        unselectedItemColor: Colors.black,
-        backgroundColor: Colors.white,
-        iconSize: 28,
+        selectedItemColor:  Colors.deepPurple,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: const Color(0xff192028),
+        iconSize: 25,
         onTap: updatePage,
         items: [
           // HOME
@@ -56,7 +55,7 @@ class _ContactState extends State<Contact> {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: _page == 0 ? Colors.cyan : Colors.white,
+                    color: _page == 0 ? Colors.deepPurple : Colors.grey,
                     width: bottomBarBorderWidth,
                   ),
                 ),
@@ -74,7 +73,7 @@ class _ContactState extends State<Contact> {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: _page == 1 ? Colors.cyan : Colors.white,
+                    color: _page == 1 ? Colors.deepPurple: Colors.grey,
                     width: bottomBarBorderWidth,
                   ),
                 ),
@@ -92,14 +91,14 @@ class _ContactState extends State<Contact> {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: _page == 2 ? Colors.cyan : Colors.white,
+                    color: _page == 2 ? Colors.deepPurple: Colors.grey,
                     width: bottomBarBorderWidth,
                   ),
                 ),
               ),
               child: const badges.Badge(
                 badgeStyle: badges.BadgeStyle(
-                  badgeColor: Colors.white,
+                  badgeColor: Colors.grey,
                   elevation: 0,
                 ),
                 child: Icon(

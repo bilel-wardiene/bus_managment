@@ -1,5 +1,6 @@
 var mongoose = require("mongoose");
 const crypto = require("crypto");
+const Itinerary = require("./itinerary");
 
 var EmployeSchema = new mongoose.Schema(
   {
@@ -22,7 +23,14 @@ var EmployeSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
+    itinerary:[ {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Itinerary",
+      
+      
+    },],
     
+
     role: {
       type: String,
       enum: ["employe", "client", "admin"],

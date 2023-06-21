@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import mapboxgl from "mapbox-gl";
+import { useRouter } from 'next/router';
+
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xmc2M5aWR0MDR0bjNubzRjOGN0MHQ2biJ9.NVG_7xuSTS_3D_IbMoZT6w';
 
 const Map = () => {
   const [markers, setMarkers] = useState([]);
   const [mapMarkers, setMapMarkers] = useState([]);
+
+
+  const router = useRouter();
+
+  useEffect(() => {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+          router.push('/');
+      }
+  }, []);
 
   useEffect(() => {
     axios

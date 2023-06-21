@@ -15,6 +15,8 @@ import { Toast } from "primereact/toast";
 import { Toolbar } from "primereact/toolbar";
 import { classNames } from "primereact/utils";
 import { Password } from "primereact/password";
+import { useRouter } from 'next/router';
+
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { ProductService } from "../../../demo/service/ProductService";
@@ -47,6 +49,19 @@ const Crud = () => {
     const toast = useRef(null);
     const dt = useRef(null);
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
+    const [selectedItinerary, setSelectedItinerary] = useState(null);
+  
+
+
+    const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            router.push('/');
+        }
+    }, []);
 
     useEffect(() => {
         fetchItineraries();
@@ -84,49 +99,80 @@ const Crud = () => {
 
     const handleAddItinerary = async () => {
         try {
-            setSubmitted(true);
-            const newItinerary = { name, stations:liststations};
-            const response = await axios.post(
-                "http://localhost:5000/itinerary/addItinerary",
-                newItinerary,
+          setSubmitted(true);
+          
+          if (selectedItinerary) {
+            // Update itinerary logic
+            const updatedItinerary = {
+              ...selectedItinerary,
+              name,
+              stations: liststations,
+            };
+            
+            await axios.put(
+              `http://localhost:5000/itinerary/updateItinerary/${selectedItinerary._id}`,
+              updatedItinerary
             );
-            setItineraries([...itineraries, response.data]);
-
+            
+            const updatedItineraries = itineraries.map((itinerary) =>
+              itinerary._id === selectedItinerary._id ? updatedItinerary : itinerary
+            );
+            
+            setItineraries(updatedItineraries);
             setProductDialog(false);
-            setName("");
-
-            setStations("");
-            setOrder("");
             toast.current.show({
-                severity: "success",
-                summary: "Successful",
-                detail: "Itinerary Created",
-                life: 3000,
+              severity: "success",
+              summary: "Successful",
+              detail: "Itinerary Updated",
+              life: 3000,
             });
-        } catch (e) {
-            console.log(e);
-            if (
-                name == "" ||
-
-                stations == "" ||
-                order == ""
-            ) {
-                toast.current.show({
-                    severity: "error",
-                    summary: "error",
-                    detail: "enter data",
-                    life: "3000",
-                });
-            } else {
-                toast.current.show({
-                    severity: "error",
-                    summary: "error",
-                    detail: "itinerary exist",
-                    life: "3000",
-                });
-            }
+          } else {
+            // Add new itinerary logic
+            const newItinerary = {
+              name,
+              stations: liststations,
+            };
+            
+            const response = await axios.post(
+              "http://localhost:5000/itinerary/addItinerary",
+              newItinerary
+            );
+            
+            setItineraries([...itineraries, response.data]);
+            setProductDialog(false);
+            toast.current.show({
+              severity: "success",
+              summary: "Successful",
+              detail: "Itinerary Created",
+              life: 3000,
+            });
+          }
+          
+          // Reset form fields
+          setName("");
+          setListStations([]);
+          setSubmitted(false);
+          setSelectedItinerary(null);
+        } catch (error) {
+          console.log(error);
+          if (name === "" || liststations.length === 0) {
+            toast.current.show({
+              severity: "error",
+              summary: "Error",
+              detail: "Please enter all the required data",
+              life: 3000,
+            });
+          } else {
+            toast.current.show({
+              severity: "error",
+              summary: "Error",
+              detail: "Itinerary already exists",
+              life: 3000,
+            });
+          }
         }
-    };
+      };
+      
 
     
 
@@ -136,41 +182,20 @@ const Crud = () => {
     };
 
 
-    const handleUpdateItinerary = async (itinerary) => {
-        try {
-            const response = await axios.put(
-                `http://localhost:5000/itinerary/updateItinerary/${itinerary._id}`, {
-                name,
-                stations,
-                order,
-            }
-
-            );
-            setItinerary({ ...itinerary });
-
-            setProductDialog(true);
-            toast.current.show({
-                severity: "success",
-                summary: "Successful",
-                detail: "Itinerary Updated",
-                life: 3000,
-            });
-        } catch (e) {
-            console.log(e);
-            toast.current.show({
-                severity: "error",
-                summary: "error",
-                detail: "Itinerary not Updated",
-                life: 3000,
-            });
-        }
-    };
+    const handleUpdateItinerary = (itinerary) => {
+        setSelectedItinerary(itinerary);
+        setName(itinerary.name);
+        setListStations(itinerary.stations);
+        setProductDialog(true);
+      };
+      
     useEffect(() => {
         const productService = new ProductService();
         productService.getProducts().then((data) => setProducts(data));
     }, []);
 
     const openNew = () => {
+        setSelectedItinerary(null);
         setProduct(emptyProduct);
         setSubmitted(false);
         setProductDialog(true);
