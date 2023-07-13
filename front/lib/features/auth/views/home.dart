@@ -1,21 +1,29 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:front/constants/strings.dart';
 import 'package:front/features/Reservation/data/models/itinerary_model.dart';
+import 'package:front/features/Reservation/data/repositories/itinerary_repository.dart';
+import 'package:front/features/Reservation/reservation_bloc/itinerary_bloc.dart';
+import 'package:front/features/auth/data/user_model.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latlong;
 import 'package:mapbox_gl/mapbox_gl.dart';
 import 'package:flutter_dropdown/flutter_dropdown.dart';
 
+import '../data/user_model.dart';
 
 class Home extends StatefulWidget {
-  const Home({super.key});
+  const Home({Key? key});
 
   @override
   _HomeState createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
+    final ItineraryRepository itineraryRepository = ItineraryRepository();
+  late final ItineraryBloc itineraryBloc;
   bool _isContainerVisible = false;
 
   DateTime? _selectedDate;
@@ -36,41 +44,79 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     });
   }
 
-   List<ItineraryModel> itineraries = [];
+  List<ItineraryModel> itineraries = [];
   Dio dio = Dio();
+
+  late User userModel;
+
 
   @override
   void initState() {
     super.initState();
-    fetchItineraries();
+    String employeeId = getEmployeeId();
+      itineraryBloc = ItineraryBloc(itineraryRepository);
+    itineraryBloc.getEmployeeItinerary(employeeId);
   }
 
-   Future<void> fetchItineraries() async {
+   @override
+  void dispose() {
+    itineraryBloc.close();
+    super.dispose();
+  }
+
+  String getEmployeeId() {
+    return '648a1220d3a01e591dff490a';
+  }
+
+  Future<void> fetchItineraries(String employeeId) async {
     try {
-      final itinerariesResponse = await dio.get('http://192.168.1.6:5000/itinerary/getAllItinerary');
+      final itinerariesResponse = await dio.get('$baseUrl/employe/$employeeId');
       final itinerariesData = itinerariesResponse.data as List<dynamic>;
+      List<ItineraryModel> fetchedItineraries = itinerariesData
+          .map((json) => ItineraryModel(
+                name: json['name'],
+                stations: List<MarkerModel>.from(json['stations'].map(
+                  (station) => MarkerModel(
+                    name: station['name'],
+                    description: station['description'],
+                    latitude: station['latitude'],
+                    longitude: station['longitude'],
+                  ),
+                )),
+              ))
+          .toList();
       setState(() {
-        itineraries = itinerariesData
-            .map((json) => ItineraryModel(
-                  name: json['name'],
-                  stations: List<MarkerModel>.from(json['stations'].map(
-                    (station) => MarkerModel(
-                      name: station['name'],
-                      description: station['description'],
-                      latitude: station['latitude'],
-                      longitude: station['longitude'],
-                    ),
-                  )),
-                ))
-            .toList();
+        itineraries = fetchedItineraries;
       });
     } catch (error) {
       // Handle error
     }
   }
 
-
-
+//  Future<void> fetchItineraries() async {
+//     try {
+//       final itinerariesResponse =
+//           await dio.get('$baseUrl/itinerary/getAllItinerary');
+//       final itinerariesData = itinerariesResponse.data as List<dynamic>;
+//       setState(() {
+//         itineraries = itinerariesData
+//             .map((json) => ItineraryModel(
+//                   name: json['name'],
+//                   stations: List<MarkerModel>.from(json['stations'].map(
+//                     (station) => MarkerModel(
+//                       name: station['name'],
+//                       description: station['description'],
+//                       latitude: station['latitude'],
+//                       longitude: station['longitude'],
+//                     ),
+//                   )),
+//                 ))
+//             .toList();
+//       });
+//     } catch (error) {
+//       // Handle error
+//     }
+//   }
 
   Future<List<LatLng>> getRouteCoordinates(List<MarkerModel> stations) async {
     List<LatLng> coordinates = [];
@@ -82,7 +128,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       final response = await dio.get(
         'https://api.mapbox.com/directions/v5/mapbox/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}',
         queryParameters: {
-          'access_token': 'sk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xleTU0emxoMDFuNTN4bDVtMDBkbnB3cyJ9.OsaVBEzWh5yexoox8UeDVQ',
+          'access_token':
+              'sk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xleTU0emxoMDFuNTN4bDVtMDBkbnB3cyJ9.OsaVBEzWh5yexoox8UeDVQ',
           'steps': 'true', // Include detailed steps in the response
           'geometries': 'polyline', // Request polyline geometry
         },
@@ -110,6 +157,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   Marker createStationMarker(MarkerModel station, String itineraryName) {
+    
     return Marker(
       width: 80.0,
       height: 80.0,
@@ -143,13 +191,13 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     );
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
+      body: BlocBuilder<ItineraryBloc, List<ItineraryModel>>(
+        bloc: itineraryBloc,
+        builder: (context, itineraries) {
+     return Stack(
         children: [
           FlutterMap(
             options: MapOptions(
@@ -170,25 +218,25 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 },
               ),
               PolylineLayer(
-            polylines: [
-              for (var itinerary in itineraries)
-                Polyline(
-                  points: [
+                polylines: [
+                  for (var itinerary in itineraries)
+                    Polyline(
+                      points: [
+                        for (var station in itinerary.stations)
+                          latlong.LatLng(station.latitude, station.longitude),
+                      ],
+                      color: Colors.blue,
+                      strokeWidth: 2.0,
+                    ),
+                ],
+              ),
+              MarkerLayer(
+                markers: [
+                  for (var itinerary in itineraries)
                     for (var station in itinerary.stations)
-                      latlong.LatLng(station.latitude, station.longitude),
-                  ],
-                  color: Colors.blue,
-                  strokeWidth: 2.0,
-                ),
-            ],
-          ),
-          MarkerLayer(
-            markers: [
-              for (var itinerary in itineraries)
-                for (var station in itinerary.stations)
-                  createStationMarker(station, itinerary.name),
-            ],
-          ),
+                      createStationMarker(station, itinerary.name),
+                ],
+              ),
             ],
           ),
           if (_isContainerVisible) // Render the container only when visible
@@ -341,6 +389,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             left: 0,
             right: 0,
             child: Container(
+              color: Color(0xff192028),
               child: TableCalendar(
                 focusedDay: DateTime.now(),
                 firstDay: DateTime.utc(2023, 1, 1),
@@ -348,7 +397,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 calendarFormat: CalendarFormat.week,
                 calendarStyle: CalendarStyle(
                   todayDecoration: BoxDecoration(
-                    color: Colors.orange,
+                    color: Colors.deepPurple,
                     shape: BoxShape.circle,
                   ),
                   selectedDecoration: BoxDecoration(
@@ -385,7 +434,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     margin: const EdgeInsets.fromLTRB(4.0, 0, 4.0, 0),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: Colors.orange,
+                      color: Colors.deepPurple,
                       shape: BoxShape.circle,
                     ),
                     child: Text(
@@ -411,7 +460,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             ),
           ),
         ],
-      ),
+      );
+        }
+          ),
+  
     );
   }
 
@@ -429,4 +481,3 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     }
   }
 }
-

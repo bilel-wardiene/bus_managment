@@ -1,24 +1,28 @@
 const mongoose = require('mongoose');
 
 const reservationSchema = new mongoose.Schema({
-  date: {
+  Time: {
     type: String,
-    required: true,
+    required: true
   },
+  
   itinerary: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Itinerary",
-    required: true,
+    ref: 'Itinerary',
+    required: true
   },
-  station: {
+  stations: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Marker",
+    ref: 'Marker'
+  }],
+  
+  employee: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employe',
     required: true,
   },
-  places: {
-    type: Number,
-    required: true,
-  },
+ 
+
 });
 
 const Reservation = mongoose.model('Reservation', reservationSchema);

@@ -7,6 +7,8 @@ router.post("/signup",user_controller.signup);
 router.post("/signin",user_controller.signin);
 router.post("verifyToken",user_controller.verifyToken);
 router.post("/addEmploye",user_controller.addEmploye);
+
+
 router.get("/getAllEmploye",user_controller.getAllEmploye);
 router.delete("/deleteEmploye/:id",user_controller.deleteEmploye);
 router.delete("/deleteEmployees", user_controller.deleteEmployees);

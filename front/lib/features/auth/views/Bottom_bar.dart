@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:front/features/Reservation/views/first_screen.dart';
+import 'package:front/features/Reservation/views/history.dart';
 import 'package:front/features/Reservation/views/reservation.dart';
 
 import 'package:front/features/auth/views/home.dart';
@@ -24,9 +25,8 @@ class _ContactState extends State<Contact> {
     //const AccountScreen(),
     const Home(),
     const FirstScreen(),
-    const Center(
-      child: Text("three page"),
-    ),
+     MyApp(),
+    
   ];
 
   void updatePage(int page) {

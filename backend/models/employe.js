@@ -26,8 +26,6 @@ var EmployeSchema = new mongoose.Schema(
     itinerary:[ {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Itinerary",
-      
-      
     },],
     
 
