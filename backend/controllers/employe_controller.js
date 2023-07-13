@@ -72,7 +72,7 @@ exports.getEmployeeItinerary = async function (req, res) {
 
 exports.reservation = async (req, res) => {
   try {
-    const { Time, itineraryId, stationIds, employeeId } = req.body;
+    const { Time, itineraryId, stationIds, employeeId, busId } = req.body;
 
     // Verify itinerary
     const itinerary = await Itinerary.findOne({ _id: itineraryId });
@@ -96,6 +96,7 @@ exports.reservation = async (req, res) => {
 
     // Check if Time exists for the bus and matches startingTime or returnTime
     const bus = await Bus.findOne({
+      _id: busId,
       $or: [
         { startingTime: Time },
         { returnTime: Time }
@@ -139,21 +140,9 @@ exports.reservation = async (req, res) => {
 };
 
 
-
-
-
-
-
-
 // exports.reservation = async (req, res) => {
 //   try {
-//     const { startingTime, returnTime, itineraryId, stationIds, numberOfPlaces } = req.body;
-
-//     // Verify startingTime and returnTime
-//     const bus = await Bus.findOne({ startingTime: startingTime, returnTime: returnTime });
-//     if (!bus) {
-//       return res.status(400).json({ message: "Invalid startingTime or returnTime" });
-//     }
+//     const { Time, itineraryId, stationIds, employeeId } = req.body;
 
 //     // Verify itinerary
 //     const itinerary = await Itinerary.findOne({ _id: itineraryId });
@@ -161,122 +150,69 @@ exports.reservation = async (req, res) => {
 //       return res.status(400).json({ message: "Invalid itinerary" });
 //     }
 
-//     // Verify stations
-//     const stations = await Marker.find({ _id: { $in: stationIds } });
-//     if (stations.length !== stationIds.length) {
+//     // Check if all stationIds exist in the specified itinerary
+//     const isValidStations = stationIds.every(stationId =>
+//       itinerary.stations.some(station => station._id.toString() === stationId)
+//     );
+//     if (!isValidStations) {
 //       return res.status(400).json({ message: "Invalid stations" });
 //     }
 
+//     // Verify employee
+//     const employee = await Employe.findOne({ _id: employeeId });
+//     if (!employee) {
+//       return res.status(400).json({ message: "Invalid employee" });
+//     }
+
+//     // Check if Time exists for the bus and matches startingTime or returnTime
+//     const bus = await Bus.findOne({
+//       $or: [
+//         { startingTime: Time },
+//         { returnTime: Time }
+//       ]
+//     });
+//     if (!bus) {
+//       return res.status(400).json({ message: "Invalid Time" });
+//     }
+
+//     // Verify if the itinerary exists for the bus
+//     if (bus.itinerary.toString() !== itineraryId) {
+//       return res.status(400).json({ message: "Invalid itinerary for the bus" });
+//     }
+
 //     // Verify number of places
-//     if (bus.number_places < numberOfPlaces) {
+//     if (bus.number_places < 1) {
 //       return res.status(400).json({ message: "Not enough places available" });
 //     }
 
 //     // Make reservation and decrement number of places
-//     bus.number_places -= numberOfPlaces;
+//     bus.number_places -= 1;
 //     await bus.save();
 
-//     return res.status(200).json({ message: "Reservation successful" });
+//     // Create a new reservation document
+//     const reservation = new Reservation({
+//       Time: Time,
+//       itinerary: itinerary,
+//       stations: stationIds,
+//       numberOfPlaces: 1,
+//       employee: employee
+//     });
+
+//     // Save the reservation to the database
+//     await reservation.save();
+
+//     return res.status(200).json(reservation);
 //   } catch (err) {
 //     console.error(err);
 //     return res.status(500).json({ message: "Internal server error" });
 //   }
 // };
-  
 
-  // exports.makeReservation = async function (bus, employe) {
-  //     // Check if busId is a valid ObjectId
-  // if (!mongoose.Types.ObjectId.isValid(bus)) {
-  //   throw new Error('Invalid busId');
-  // }
-  //   // Find the bus
-  //   const buses = await Bus.findById(bus);
-  //   if (!buses) {
-  //     throw new Error('Bus not found');
-  //   }
-  
-  //   // Check if the bus has available places
-  //   if (buses.number_places <= 0) {
-  //     throw new Error('No available places in this bus');
-  //   }
-  
-  //   // Check if the bus has a valid itinerary
-  //   if (!buses.itinerary) {
-  //     throw new Error('Bus does not have a valid itinerary');
-  //   }
-  
-  //   // Check if the bus has startingTime and returnTime
-  //   if (!buses.startingTime || !buses.returnTime) {
-  //     throw new Error('Bus does not have a valid startingTime or returnTime');
-  //   }
-  
-  //   // If everything is okay, create a new reservation
-  //   const reservation = new Reservation({
-  //     buses: bus,
-  //     user: employe,
-  //   });
-  
-  //   // Decrement the number of places in the bus
-  //   buses.number_places -= 1;
-  //   await buses.save();
-  
-  //   // Save the reservation
-  //   await reservation.save();
-  
-  //   return reservation;
-  // };
-  
-  
-  // exports.makeReservation = async (employeId, busStartingTime, busReturnTime, itineraryId, stationIds, placesRequested) => {
-  //   try {
-  //     // Check if the bus is available
-  //     const busAvailability = await Bus.findOne({
-  //       startingTime: busStartingTime,
-  //       returnTime: busReturnTime,
-  //     });
-  
-  //     if (!busAvailability) {
-  //       return 'Bus not available';
-  //     }
-  
-  //     // Check if the itinerary is available
-  //     const itineraryAvailability = await Itinerary.findById(itineraryId);
-  
-  //     if (!itineraryAvailability) {
-  //       return 'Itinerary not available';
-  //     }
-  
-  //     // Check if all stations are available
-  //     const stationAvailabilityPromises = stationIds.map(async (stationId) => {
-  //       const station = await Marker.findById(stationId);
-  //       return !!station; // Returns true if the station exists
-  //     });
-  
-  //     const stationAvailability = await Promise.all(stationAvailabilityPromises);
-  //     const allStationsAvailable = stationAvailability.every((station) => station);
-  
-  //     if (!allStationsAvailable) {
-  //       return 'Some stations are not available';
-  //     }
-  
-  //     // Check if the requested number of places is available
-  //     const availablePlaces = busAvailability.number_places;
-  
-  //     if (availablePlaces < placesRequested) {
-  //       return 'Requested number of places not available';
-  //     }
-  
-  //     // Make the reservation and decrement the number of places in the bus
-  //     busAvailability.number_places -= placesRequested;
-  //     await busAvailability.save();
-  
-  //     // Perform other reservation-related tasks here
-  
-  //     return 'Reservation made successfully';
-  //   } catch (error) {
-  //     return 'An error occurred during the reservation process';
-  //   }
-  // };
+
+
+
+
+
   
     
    
