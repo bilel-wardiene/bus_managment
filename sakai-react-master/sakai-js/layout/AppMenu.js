@@ -49,13 +49,9 @@ const AppMenu = () => {
                 {
                     label: 'Reservation list',
                     icon: 'pi pi-fw pi-list',
-                    to: ''
+                    to: '/pages/crud/reservation'
                 },
-                {
-                    label: 'History',
-                    icon: 'pi pi-fw pi-history',
-                    to: ''
-                },
+                
                 
 
                 

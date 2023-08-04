@@ -21,8 +21,11 @@ const reservationSchema = new mongoose.Schema({
     ref: 'Employe',
     required: true,
   },
-
-  
+  busId: { // Add the busId field
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Bus',
+    required: true,
+  },
  
 
 });

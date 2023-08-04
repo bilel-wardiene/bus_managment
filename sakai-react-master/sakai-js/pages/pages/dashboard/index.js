@@ -49,7 +49,7 @@ const Map = () => {
       .then((response) => {
         setRoutes(response.data);
         response.data.forEach((route) => {
-          fetchRoute(route.start, route.end);
+          fetchRoute(route.stations);
         });
       })
       .catch((error) => {
@@ -57,63 +57,101 @@ const Map = () => {
       });
   }, []);
   
-  // const fetchRoute = async (itinerary) => {
-  //   const stations = itinerary.stations;
-  //   console.log('Stations:', stations);
+  const fetchRoute = async (stations) => {
+
   
-  //   try {
-  //     const start = stations[0];
-  //     const end = stations[stations.length - 1];
+    try {
+      const start = stations[0];
+      const end = stations[1];
   
-  //     const requestUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
-  //     const response = await axios.get(requestUrl);
+       const requestUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&access_token=${mapboxgl.accessToken}&steps=true&alternatives=true&overview=full`;
+      // const requestUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/36.964839957677526%2C9.715474168861363%3B36.76483995767752%2C9.715474168861363%3B36.84624304238665%2C10.088322679606335?alternatives=false&banner_instructions=true&continue_straight=false&geometries=geojson&language=en&overview=full&roundabout_exits=true&steps=true&access_token=pk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xlc2dsODF0MHduZzN5cDFna3UyMm9tMyJ9.lQXHWjkWEzBchhit1O4CWw`;
+      const response = await axios.get(requestUrl);
+      if (response.status !== 200) {
+        console.error('Error fetching route:', response);
+        return;
+      }
   
-  //     if (response.status !== 200) {
-  //       console.error('Error fetching route:', response);
-  //       return;
-  //     }
-  
-  //     const routeGeometry = response.data.routes[0].geometry;
-  //     setItineraryCoordinates(prevCoordinates => [...prevCoordinates, routeGeometry.coordinates]);
-  
-  //     return routeGeometry;
-  //   } catch (error) {
-  //     console.error('Error fetching route:', error);
-  //     if (error.response) {
-  //       console.error('Error response data:', error.response.data);
-  //     }
-  //   }
-  // };
+      const routeGeometry = response.data.routes[0].geometry;
+      setItineraryCoordinates(prevCoordinates => [...prevCoordinates, routeGeometry.coordinates]);
+      addRouteToMap(map,routeGeometry)
+      return routeGeometry;
+    } catch (error) {
+      console.error('Error fetching route:', error);
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+      }
+    }
+  };
   
   
   const addRouteToMap = (map, routeGeometry) => {
-    if (map.getSource('route')) {
-      map.removeLayer('route');
-      map.removeSource('route');
-    }
+   
+    // debugger
+    // if (map.getSource('route')) {
+    //   map.removeLayer('route');
+    //   map.removeSource('route');
+    // }
 
-    map.addSource('route', {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: routeGeometry,
-      },
-    });
+    // map.addSource('route', {
+    //   type: 'geojson',
+    //   data: {
+    //     type: 'Feature',
+    //     properties: {},
+    //     geometry: routeGeometry,
+    //   },
+    // });
 
-    map.addLayer({
-      id: 'route',
-      type: 'line',
-      source: 'route',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
+    // map.addLayer({
+    //   id: 'route',
+    //   type: 'line',
+    //   source: 'route',
+    //   layout: {
+    //     'line-join': 'round',
+    //     'line-cap': 'round',
+    //   },
+    //   paint: {
+    //     'line-color': '#007cbf',
+    //     'line-width': 4,
+    //   },
+    // });
+    // map = new mapboxgl.Map({
+    // container: 'map',
+    // // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+    // style: 'mapbox://styles/mapbox/streets-v12',
+    // center: [-122.486052, 37.830348],
+    // zoom: 14
+    // });
+    map.current.on('load', () => {
+      
+      map.current.addSource('route', {
+      'type': 'geojson',
+      'data': {
+      'type': 'Feature',
+      'properties': {},
+      'geometry': {
+      'type': 'LineString',
+      'coordinates': routeGeometry.coordinates
+      }
+      }
+      });
+      map.current.addLayer({
+      'id': 'route',
+      'type': 'line',
+      'source': 'route',
+      'layout': {
+      'line-join': 'round',
+      'line-cap': 'round'
       },
-      paint: {
-        'line-color': '#007cbf',
-        'line-width': 4,
-      },
-    });
+      'paint': {
+      'line-color': 'red',
+      'line-width': 8
+      }
+      });
+       
+    },
+
+      );
   };
 
 
@@ -134,39 +172,39 @@ const Map = () => {
     if (map.current) return;
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v11",
+      style: "mapbox://styles/mapbox/satellite-streets-v11",
       center: [10.165226976479506, 36.86821934095694],
       zoom: 9,
     });
   
-    map.current.on('load', () => {
-      // Draw routes on the map
-      itineraryCoordinates.forEach((coordinates, index) => {
-        map.current.addLayer({
-          id: `itinerary-${index}`,
-          type: 'line',
-          source: {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'LineString',
-                coordinates: coordinates,
-              },
-            },
-          },
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-          },
-          paint: {
-            'line-color': '#888',
-            'line-width': 8,
-          },
-        });
-      });
-    });
+    // map.current.on('load', () => {
+    //   // Draw routes on the map
+    //   itineraryCoordinates.forEach((coordinates, index) => {
+    //     map.current.addLayer({
+    //       id: `itinerary-${index}`,
+    //       type: 'line',
+    //       source: {
+    //         type: 'geojson',
+    //         data: {
+    //           type: 'Feature',
+    //           properties: {},
+    //           geometry: {
+    //             type: 'LineString',
+    //             coordinates: coordinates,
+    //           },
+    //         },
+    //       },
+    //       layout: {
+    //         'line-join': 'round',
+    //         'line-cap': 'round',
+    //       },
+    //       paint: {
+    //         'line-color': '#888',
+    //         'line-width': 8,
+    //       },
+    //     });
+    //   });
+    // });
 
 map.current.addControl(new NavigationControl(), 'bottom-right');
 }, [itineraryCoordinates]);
@@ -216,6 +254,7 @@ map.current.addControl(new NavigationControl(), 'bottom-right');
         console.log(response.data);
       })
   };
+ 
   useEffect(() => {
     markers.forEach(marker => {
       if (marker.latitude < -90 || marker.latitude > 90) {

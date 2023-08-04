@@ -3,6 +3,10 @@ const User = require("../models/user");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const Employe = require("../models/employe");
+const Itinerary = require("../models/itinerary");
+const Marker = require("../models/marker");
+const Reservation = require("../models/reservation");
+const Bus = require("../models/bus");
 
 
 
@@ -77,7 +81,52 @@ exports.verifyToken = async function (req, res) {
 
 
 
-  
+exports.getAllReservation = async function (req, res) {
+  try {
+    const reservations = await Reservation.find()
+      .populate({
+        path: 'employee',
+        select: 'userName',
+      })
+      .populate({
+        path: 'stations',
+        select: 'name',
+      })
+      .populate({
+        path: 'itinerary',
+        select: 'name',
+       
+      })
+      .exec();
+
+    res.status(200).json(reservations);
+  } catch (error) {
+    console.error('Error fetching reservations:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
+exports.deleteReservation = async function (req, res) {
+  try {
+    const reservation = await Reservation.findByIdAndDelete(req.params.id);
+    if (!reservation) {
+      return res.status(404).json({ error: 'Reservation not found' });
+    }
+
+    // Increment the number of places for the associated bus
+    const bus = await Bus.findById(reservation.busId);
+    if (!bus) {
+      return res.status(404).json({ error: 'Bus not found' });
+    }
+    bus.number_places += 1;
+    await bus.save();
+
+    return res.status(200).json({ message: 'Reservation deleted successfully' });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
+  }
+};
 
 // get all employe
 exports.getAllEmploye = async function (req, res) {
@@ -89,6 +138,21 @@ exports.getAllEmploye = async function (req, res) {
     } catch (e) {
         res.status(400).json({ error: e.message });
     }
+};
+
+// Function to get an employee by ID
+exports.getEmployeeById = async function (req, res) {
+  const { id } = req.params;
+
+  try {
+    const employee = await Employe.findById(id).populate('itinerary');
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+    res.status(200).json({ status: 200, data: employee });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 };
 
 // get itinerary for a specific employee

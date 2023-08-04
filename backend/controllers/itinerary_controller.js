@@ -20,9 +20,9 @@ exports.createItinerary = async function (req, res) {
 
 exports.getAllItineraries = async function (req, res) {
   try {
-    const itineraries = await Itinerary.find().populate({
-      path: "stations",
-    });
+    const itineraries = await Itinerary.find().populate(
+      "stations",
+    ).exec();
     res.json(itineraries);
   } catch (error) {
     res.status(400).json({ message: error.message });

@@ -55,6 +55,9 @@ dependencies:
   table_calendar: ^3.0.9
   intl: ^0.18.1
   flutter_dropdown: ^1.0.1+hotfix.1
+  time_picker_spinner: ^0.0.1
+  http: ^0.13.5
+  shared_preferences: ^2.2.0
 
  
 

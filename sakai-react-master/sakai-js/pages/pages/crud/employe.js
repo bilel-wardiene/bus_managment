@@ -398,18 +398,24 @@ const Crud = () => {
         );
     };
 
-  
+    const descriptionBodyTemplate = (markers) => {
+        console.log('Markers:', markers);
+        return (
+          <>
+            <span className="p-column-title">Itinerary</span>
+            {markers.itinerary ? markers.itinerary.name : ''}
+          </>
+        );
+      };
     const itineraryBodyTemplate = (employees) => {
-        if (employees.itinerary) {
+        
           return (
             <>
-              <span className="p-column-title">itinerary</span>
-              {employees.itinerary.name}
+              <span className="p-column-title">Itinerary</span>
+              {employees.itinerary ? employees.itinerary.name : ''}
             </>
           );
-        } else {
-          return null; // Handle the case when itinerary is null or undefined
-        }
+       
       };
 
     const emailBodyTemplate = (employees) => {

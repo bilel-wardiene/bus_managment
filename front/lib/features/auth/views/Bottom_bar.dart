@@ -5,8 +5,11 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:front/features/Reservation/views/first_screen.dart';
 import 'package:front/features/Reservation/views/history.dart';
 import 'package:front/features/Reservation/views/reservation.dart';
+import 'package:front/features/auth/views/lgout.dart';
+
 
 import 'package:front/features/auth/views/home.dart';
+import 'package:front/features/auth/views/lgout.dart';
 
 
 class Contact extends StatefulWidget {
@@ -17,6 +20,7 @@ class Contact extends StatefulWidget {
 }
 
 class _ContactState extends State<Contact> {
+  LogoutManager _logoutManager = LogoutManager(); // Create an instance
   int _page = 0;
   double bottomBarWidth = 42;
   double bottomBarBorderWidth = 5;
@@ -24,10 +28,13 @@ class _ContactState extends State<Contact> {
     //const HomeScreen(),
     //const AccountScreen(),
     const Home(),
-    const FirstScreen(),
      MyApp(),
     
+    
   ];
+  void _logout() {
+    LogoutManager.logout(context); // Call the logout method from the instance
+  }
 
   void updatePage(int page) {
     setState(() {
@@ -66,7 +73,6 @@ class _ContactState extends State<Contact> {
             ),
             label: '',
           ),
-          // ACCOUNT
           BottomNavigationBarItem(
             icon: Container(
               width: bottomBarWidth,
@@ -78,36 +84,41 @@ class _ContactState extends State<Contact> {
                   ),
                 ),
               ),
-              child: const Icon(
-                Icons.add_task_outlined,
-              ),
-            ),
-            label: '',
-          ),
-          // CART
-          BottomNavigationBarItem(
-            icon: Container(
-              width: bottomBarWidth,
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: _page == 2 ? Colors.deepPurple: Colors.grey,
-                    width: bottomBarBorderWidth,
-                  ),
-                ),
-              ),
-              child: const badges.Badge(
-                badgeStyle: badges.BadgeStyle(
-                  badgeColor: Colors.grey,
-                  elevation: 0,
-                ),
+              
                 child: Icon(
                   Icons.history,
                 ),
-              ),
             ),
             label: '',
           ),
+         
+          BottomNavigationBarItem(
+      icon: Container(
+        width: bottomBarWidth,
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: _page == 2 ? Colors.deepPurple: Colors.grey,
+              width: bottomBarBorderWidth,
+            ),
+          ),
+        ),
+        child: GestureDetector(
+          onTap: _logout, // Call _logout method when the icon is tapped
+          child: const badges.Badge(
+            badgeStyle: badges.BadgeStyle(
+              badgeColor: Colors.grey,
+              elevation: 0,
+            ),
+            child: Icon(
+              Icons.logout,
+            ),
+          ),
+        ),
+      ),
+      label: '',
+    ),
+          // CART
         ],
       ),
     );

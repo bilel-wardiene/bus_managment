@@ -8,22 +8,22 @@ class ItineraryBloc extends Cubit<List<ItineraryModel>> {
 
   ItineraryBloc(this._repository) : super([]);
 
- Future<void> getEmployeeItinerary(String employeeId) async {
-    try {
-      final itineraries = await _repository.getEmployeeItinerary(employeeId);
-      if (itineraries.isNotEmpty) {
-        emit(itineraries);
-      } else {
-        // Handle case when itineraries list is empty
-        // You can emit an empty list or show an error message
-        emit([]);
-      }
-    } catch (error) {
-      // Handle error
-      // You can emit an empty list or show an error message
-      emit([]);
-    }
-  }
+//  Future<void> getEmployeeItinerary(String employeeId) async {
+//     try {
+//       final itineraries = await _repository.getEmployeeItinerary(employeeId);
+//       if (itineraries.isNotEmpty) {
+//         emit(itineraries);
+//       } else {
+//         // Handle case when itineraries list is empty
+//         // You can emit an empty list or show an error message
+//         emit([]);
+//       }
+//     } catch (error) {
+//       // Handle error
+//       // You can emit an empty list or show an error message
+//       emit([]);
+//     }
+//   }
 
 
   Future<void> getAllItineraries() async {

@@ -74,12 +74,13 @@ exports.reservation = async (req, res) => {
   try {
     const { Time, itineraryId, stationIds, employeeId, busId } = req.body;
 
-    // Verify itinerary
+    // Verify itinerary 
     const itinerary = await Itinerary.findOne({ _id: itineraryId });
     if (!itinerary) {
       return res.status(400).json({ message: "Invalid itinerary" });
     }
 
+    console.log("stationIds",stationIds);
     // Check if all stationIds exist in the specified itinerary
     const isValidStations = stationIds.every(stationId =>
       itinerary.stations.some(station => station._id.toString() === stationId)
@@ -126,7 +127,9 @@ exports.reservation = async (req, res) => {
       itinerary: itinerary,
       stations: stationIds,
       numberOfPlaces: 1,
-      employee: employee
+      employee: employee,
+      busId: busId 
+      
     });
 
     // Save the reservation to the database
