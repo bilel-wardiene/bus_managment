@@ -7,7 +7,7 @@ import { Dialog } from "primereact/dialog";
 import { Menu } from 'primereact/menu';
 import { InputText } from "primereact/inputtext";
 import { classNames } from "primereact/utils";
-import mapboxgl, { NavigationControl } from 'mapbox-gl';
+import mapboxgl, { NavigationControl, accessToken } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { ProductService } from '../../../demo/service/ProductService'
@@ -57,25 +57,43 @@ const Map = () => {
       });
   }, []);
   
+  const buildUrl = function(stations,token){
+    debugger
+    let url = "https://api.mapbox.com/directions/v5/mapbox/driving/";
+    
+    stations.forEach(station => {
+      url = url.concat(`${station.longitude},${station.latitude};`)
+    });
+    url = url.substring(0, url.length-1);
+    url += "?geometries=geojson&access_token="+token+"&steps=true&alternatives=true&overview=full";
+    return url;
+
+  }
+  
   const fetchRoute = async (stations) => {
 
   
     try {
-      const start = stations[0];
-      const end = stations[1];
-  
-       const requestUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&access_token=${mapboxgl.accessToken}&steps=true&alternatives=true&overview=full`;
-      // const requestUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/36.964839957677526%2C9.715474168861363%3B36.76483995767752%2C9.715474168861363%3B36.84624304238665%2C10.088322679606335?alternatives=false&banner_instructions=true&continue_straight=false&geometries=geojson&language=en&overview=full&roundabout_exits=true&steps=true&access_token=pk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xlc2dsODF0MHduZzN5cDFna3UyMm9tMyJ9.lQXHWjkWEzBchhit1O4CWw`;
-      const response = await axios.get(requestUrl);
+      
+     
+      const requestUrl = buildUrl(stations,mapboxgl.accessToken);
+      debugger;
+       const response = await axios.get(requestUrl);
       if (response.status !== 200) {
         console.error('Error fetching route:', response);
         return;
       }
+
   
-      const routeGeometry = response.data.routes[0].geometry;
-      setItineraryCoordinates(prevCoordinates => [...prevCoordinates, routeGeometry.coordinates]);
-      addRouteToMap(map,routeGeometry)
-      return routeGeometry;
+      debugger
+      const routeGeometries = response.data.routes.map(route => route.geometry);
+      setItineraryCoordinates(prevCoordinates => [...prevCoordinates, ...routeGeometries]);
+      
+      routeGeometries.forEach(routeGeometry => {
+        addRouteToMap(map, routeGeometry);
+      });
+  
+      return routeGeometries;
     } catch (error) {
       console.error('Error fetching route:', error);
       if (error.response) {
@@ -83,76 +101,87 @@ const Map = () => {
       }
     }
   };
+
+
   
   
-  const addRouteToMap = (map, routeGeometry) => {
+  
+  
+  // const addRouteToMap = (map, routeGeometry) => {
    
-    // debugger
-    // if (map.getSource('route')) {
-    //   map.removeLayer('route');
-    //   map.removeSource('route');
-    // }
-
-    // map.addSource('route', {
-    //   type: 'geojson',
-    //   data: {
-    //     type: 'Feature',
-    //     properties: {},
-    //     geometry: routeGeometry,
-    //   },
-    // });
-
-    // map.addLayer({
-    //   id: 'route',
-    //   type: 'line',
-    //   source: 'route',
-    //   layout: {
-    //     'line-join': 'round',
-    //     'line-cap': 'round',
-    //   },
-    //   paint: {
-    //     'line-color': '#007cbf',
-    //     'line-width': 4,
-    //   },
-    // });
-    // map = new mapboxgl.Map({
-    // container: 'map',
-    // // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
-    // style: 'mapbox://styles/mapbox/streets-v12',
-    // center: [-122.486052, 37.830348],
-    // zoom: 14
-    // });
-    map.current.on('load', () => {
+  //   map.current.on('load', () => {
       
-      map.current.addSource('route', {
-      'type': 'geojson',
-      'data': {
-      'type': 'Feature',
-      'properties': {},
-      'geometry': {
-      'type': 'LineString',
-      'coordinates': routeGeometry.coordinates
-      }
-      }
-      });
-      map.current.addLayer({
-      'id': 'route',
-      'type': 'line',
-      'source': 'route',
-      'layout': {
-      'line-join': 'round',
-      'line-cap': 'round'
-      },
-      'paint': {
-      'line-color': 'red',
-      'line-width': 8
-      }
-      });
+  //     map.current.addSource('route', {
+  //     'type': 'geojson',
+  //     'data': {
+  //     'type': 'Feature',
+  //     'properties': {},
+  //     'geometry': {
+  //     'type': 'LineString',
+  //     'coordinates': routeGeometry.coordinates
+  //     }
+  //     }
+  //     });
+  //     map.current.addLayer({
+  //     'id': 'route',
+  //     'type': 'line',
+  //     'source': 'route',
+  //     'layout': {
+  //     'line-join': 'round',
+  //     'line-cap': 'round'
+  //     },
+  //     'paint': {
+  //     'line-color': 'red',
+  //     'line-width': 8
+  //     }
+  //     });
        
-    },
+  //   },
 
-      );
+  //     );
+  // };
+  const addRouteToMap = (map, routeGeometry, routeIndex) => {
+    const sourceId = `route-${routeIndex}`;
+  
+    if (!map.current.getSource(sourceId)) {
+      map.current.addSource(sourceId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: routeGeometry.coordinates
+          }
+        }
+      });
+  
+      map.current.addLayer({
+        id: `route-layer-${routeIndex}`,
+        type: 'line',
+        source: sourceId,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': 'red',
+          'line-width': 2
+        }
+      });
+    } else {
+      const source = map.current.getSource(sourceId);
+      source.setData({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: routeGeometry.coordinates
+        }
+      });
+    }
   };
+  
 
 
   useEffect(() => {
@@ -172,7 +201,7 @@ const Map = () => {
     if (map.current) return;
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/satellite-streets-v11",
+      style: "mapbox://styles/bilel-02/clesqx7pr00d701pj9hvz1jnm",
       center: [10.165226976479506, 36.86821934095694],
       zoom: 9,
     });
@@ -410,14 +439,26 @@ map.current.addControl(new NavigationControl(), 'bottom-right');
           longitudeInput.value = marker.longitude;
           submitButton.innerText = 'Update';
           form.appendChild(nameLabel);
+          form.appendChild(document.createElement('br'));
           form.appendChild(nameInput);
+          form.appendChild(document.createElement('br'));
           form.appendChild(descriptionLabel);
+          form.appendChild(document.createElement('br'));
           form.appendChild(descriptionInput);
+          form.appendChild(document.createElement('br'));
           form.appendChild(latitudeLabel);
+          form.appendChild(document.createElement('br'));
           form.appendChild(latitudeInput);
+          form.appendChild(document.createElement('br'));
           form.appendChild(longitudeLabel);
+          form.appendChild(document.createElement('br'));
           form.appendChild(longitudeInput);
+          form.appendChild(document.createElement('br'));
           form.appendChild(submitButton);
+          const inputFields = [nameInput, descriptionInput, latitudeInput, longitudeInput];
+          inputFields.forEach(input => {
+                    input.style.width = '100%'; // You can adjust the width value as needed
+          });
           popup.current.setDOMContent(form);
           submitButton.addEventListener('click', e => {
             e.preventDefault();

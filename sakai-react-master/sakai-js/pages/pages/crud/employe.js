@@ -185,8 +185,8 @@ const Crud = () => {
         };
 
         emailjs.send(
-            'service_i89uxs8',
-            'template_xgzj0to',
+            'service_8k5qev6',
+            'template_e3z4xgo',
             templateParams,
             'yvxNBLg45iiK7wPQl'
         )
@@ -407,16 +407,17 @@ const Crud = () => {
           </>
         );
       };
-    const itineraryBodyTemplate = (employees) => {
-        
-          return (
-            <>
-              <span className="p-column-title">Itinerary</span>
-              {employees.itinerary ? employees.itinerary.name : ''}
-            </>
-          );
-       
+      const itineraryBodyTemplate = (employees) => {
+        return (
+          <>
+            <span className="p-column-title">Itinerary</span>
+            {employees.itinerary.map((itinerary) => (
+              <div key={itinerary.id}>{itinerary.name}</div>
+            ))}
+          </>
+        );
       };
+      
 
     const emailBodyTemplate = (employees) => {
         return (
@@ -456,7 +457,7 @@ const Crud = () => {
 
     const header = (
         <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
-            <h5 className="m-0">Manage Employes</h5>
+            <h5 className="m-0">Manage Employees</h5>
             <span className="block mt-2 md:mt-0 p-input-icon-left">
                 <i className="pi pi-search" />
                 <InputText
@@ -600,7 +601,7 @@ const Crud = () => {
                     <Dialog
                         visible={productDialog}
                         style={{ width: "450px" }}
-                        header="Employes Details"
+                        header="Employees Details"
                         modal
                         className="p-fluid"
                         footer={productDialogFooter}

@@ -45,7 +45,7 @@ export default function EditItinerary(props) {
     <Dialog
       visible={productDialog}
       style={{ width: "450px" }}
-      header="Stations Details"
+      header="Itineraries Details"
       modal
       className="p-fluid"
       footer={productDialogFooter}

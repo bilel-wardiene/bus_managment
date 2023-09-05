@@ -180,7 +180,7 @@ class _SignInState extends State<SignInView> with TickerProviderStateMixin {
                         child: Padding(
                           padding: EdgeInsets.only(top: size.height * .1),
                           child: Text(
-                            'Login',
+                            'Bus managment',
                             style: TextStyle(
                               color: Colors.white.withOpacity(.7),
                               fontSize: 30,

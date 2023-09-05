@@ -10,8 +10,8 @@ const AppMenu = () => {
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
     const model = [
         {
-            label: 'Home',
-            items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/pages/dashboard/' }]
+            label: 'Dashboard',
+            items: [{ label: 'Home', icon: 'pi pi-fw pi-home', to: '/pages/dashboard/' }]
         },
         
        
@@ -24,7 +24,7 @@ const AppMenu = () => {
                 
                 
                 {
-                    label: 'Employe',
+                    label: 'Employee',
                     icon: 'pi pi-fw pi-user',
                     to: '/pages/crud/employe'
                 },

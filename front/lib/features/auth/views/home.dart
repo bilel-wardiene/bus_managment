@@ -30,7 +30,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   final ItineraryRepository itineraryRepository = ItineraryRepository();
   late final ItineraryBloc itineraryBloc;
   bool _isContainerVisible = false;
- final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   DateTime? _selectedDate;
   DateTime? _selectedDateTime;
   String? _selectedToStation;
@@ -38,6 +38,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   String? _selectedBus;
 
   List<String> _itineraryOptions = [];
+
   String? _selectedItinerary;
 
   List<String> _markerOptions = [];
@@ -49,7 +50,34 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     });
   }
 
-  List<ItineraryModel> itineraries = [];
+  List<ItineraryModel> itineraries = [
+    ItineraryModel(
+      name: 'Itinerary 1',
+      stations: [
+        MarkerModel(
+          name: 'Station 1',
+          description: 'Description 1',
+          latitude: 36.69669142121775,
+          longitude: 9.835583245180743,
+        ),
+        MarkerModel(
+          name: 'Station 2',
+          description: 'Description 2',
+          latitude: 36.70223366538448,
+          longitude: 9.840913978179202,
+        ),
+        MarkerModel(
+          name: 'Station 3',
+          description: 'Description 3',
+          latitude: 36.71764712362926,
+          longitude: 9.848389330980098,
+        ),
+        // Add more stations as needed
+      ],
+    ),
+    // Add more itineraries as needed
+  ];
+
   Dio dio = Dio();
 
   late User? userModel = User();
@@ -63,7 +91,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     fetchMarkerOptions();
     itineraryBloc = ItineraryBloc(itineraryRepository);
     itineraryBloc.getAllItineraries();
-    fetchItineraries();
+    // fetchItineraries();
   }
 
   @override
@@ -73,7 +101,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void _handleReservation() {
-      if (_selectedDateTime == null ||
+    if (_selectedDateTime == null ||
         _selectedBus == null ||
         _selectedItinerary == null ||
         _selectedMarkers == null) {
@@ -94,19 +122,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           ],
         ),
       );
-    }
-     else if (_formKey.currentState!.validate()) {
-                          final requestBody = ReservationModel(
-                            time: _selectedDateTime.toString(),
-                            busId: _selectedBus!,
-                            
-                            itineraryId: _selectedItinerary!,
-                            stationIds: _selectedMarkers!,
-                          ).toJson();
-
-                          BlocProvider.of<ReservationBloc>(context)
-                              .add(ReservationRequested(requestBody));
-                               showDialog(
+    } else {
+      showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: Text('Reservation Successful'),
@@ -121,8 +138,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           ],
         ),
       );
-                        }
-  
+    }
   }
 
   String getEmployeeId() {
@@ -154,30 +170,30 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   //   }
   // }
 
- Future<void> fetchItineraries() async {
-    try {
-      final itinerariesResponse =
-          await dio.get('$baseUrl/itinerary/getAllItinerary');
-      final itinerariesData = itinerariesResponse.data as List<dynamic>;
-      setState(() {
-        itineraries = itinerariesData
-            .map((json) => ItineraryModel(
-                  name: json['name'],
-                  stations: List<MarkerModel>.from(json['stations'].map(
-                    (station) => MarkerModel(
-                      name: station['name'],
-                      description: station['description'],
-                      latitude: station['latitude'],
-                      longitude: station['longitude'],
-                    ),
-                  )),
-                ))
-            .toList();
-      });
-    } catch (error) {
-      // Handle error
-    }
-  }
+//  Future<void> fetchItineraries() async {
+//     try {
+//       final itinerariesResponse =
+//           await dio.get('$baseUrl/itinerary/getAllItinerary');
+//       final itinerariesData = itinerariesResponse.data as List<dynamic>;
+//       setState(() {
+//         itineraries = itinerariesData
+//             .map((json) => ItineraryModel(
+//                   name: json['name'],
+//                   stations: List<MarkerModel>.from(json['stations'].map(
+//                     (station) => MarkerModel(
+//                       name: station['name'],
+//                       description: station['description'],
+//                       latitude: station['latitude'],
+//                       longitude: station['longitude'],
+//                     ),
+//                   )),
+//                 ))
+//             .toList();
+//       });
+//     } catch (error) {
+//       // Handle error
+//     }
+//   }
 
   Future<List<LatLng>> getRouteCoordinates(List<MarkerModel> stations) async {
     List<LatLng> coordinates = [];
@@ -190,11 +206,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         'https://api.mapbox.com/directions/v5/mapbox/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}',
         queryParameters: {
           'access_token':
-              'sk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xleTU0emxoMDFuNTN4bDVtMDBkbnB3cyJ9.OsaVBEzWh5yexoox8UeDVQ',
+              'sk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xseG5kbnFiMGU3aTNycDNuZnBzb2c4ayJ9.tFU84RyIJyfsrx1bVt8UZA',
           'steps': 'true', // Include detailed steps in the response
-          'geometries': 'polyline',  // Request polyline geometry
-          'alternatives': 'true', 
-          'overview' : 'full'
+          'geometries': 'polyline', // Request polyline geometry
+          'alternatives': 'true',
+          'overview': 'full'
         },
       );
 
@@ -340,207 +356,219 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<ItineraryBloc, List<ItineraryModel>>(
-          bloc: itineraryBloc,
-          builder: (context, itineraries) {
-            return Stack(
-              children: [
-                FlutterMap(
-                  options: MapOptions(
-                    center: latlong.LatLng(
-                      36.86821934095694,
-                      10.165226976479506,
-                    ),
-                    zoom: 15.0,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://api.mapbox.com/styles/v1/bilel-02/clesrzfu6006p01s5fgkqbk9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xlc2dsODF0MHduZzN5cDFna3UyMm9tMyJ9.lQXHWjkWEzBchhit1O4CWw',
-                      additionalOptions: {
-                        'accessToken':
-                            'sk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xleTU0emxoMDFuNTN4bDVtMDBkbnB3cyJ9.OsaVBEzWh5yexoox8UeDVQ',
-                        'id': 'mapbox.country-boundaries-v1',
-                      },
-                    ),
-                    PolylineLayer(
-                      polylines: [
-                        for (var itinerary in itineraries)
-                          Polyline(
-                            points: [
-                              for (var station in itinerary.stations)
-                                latlong.LatLng(
-                                    station.latitude, station.longitude),
-                            ],
-                            color: Colors.blue,
-                            strokeWidth: 2.0,
-                          ),
+      body: Stack(
+        children: [
+          FlutterMap(
+            options: MapOptions(
+              center: latlong.LatLng(
+                36.86821934095694,
+                10.165226976479506,
+              ),
+              zoom: 15.0,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate:
+                    'https://api.mapbox.com/styles/v1/bilel-02/clesrzfu6006p01s5fgkqbk9c/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xlc2dsODF0MHduZzN5cDFna3UyMm9tMyJ9.lQXHWjkWEzBchhit1O4CWw',
+                additionalOptions: {
+                  'accessToken':
+                      'sk.eyJ1IjoiYmlsZWwtMDIiLCJhIjoiY2xseG5kbnFiMGU3aTNycDNuZnBzb2c4ayJ9.tFU84RyIJyfsrx1bVt8UZA',
+                  'id': 'mapbox.country-boundaries-v1',
+                },
+              ),
+              PolylineLayer(
+                polylines: [
+                  for (var itinerary in itineraries)
+                    Polyline(
+                      points: [
+                        // Add your list of LatLng points here representing the car's route
+                        latlong.LatLng(36.69669142121775, 9.835583245180743),
+                        latlong.LatLng(36.697633006320174, 9.837202686112818),
+                        latlong.LatLng(36.69859736125025, 9.838841070776141),
+                        latlong.LatLng(36.69959207677179, 9.840545745511292),
+                        latlong.LatLng(36.69988061738313, 9.8411802633035),
+                        latlong.LatLng(36.70025942902575, 9.842177250028783),
+                        latlong.LatLng(36.701393433851564, 9.84084835267987),
+                        latlong.LatLng(36.70159398183486, 9.841383191480702),
+                        latlong.LatLng(36.70203322623513, 9.8408627316376),
+                        latlong.LatLng(36.70214985470655, 9.84085526712579),
+                        latlong.LatLng(36.70223366538448, 9.840913978179202),
+                        latlong.LatLng(36.702475761987515, 9.840677625861133),
+                        latlong.LatLng(36.70291869293136, 9.840133082121241),
+                        latlong.LatLng(36.7030440662071, 9.840105408479815),
+                        latlong.LatLng(36.70324911733174, 9.840382931743022),
+                        latlong.LatLng(36.70525603428051, 9.837867576437674),
+                        latlong.LatLng(36.70980701135912, 9.843206167113209),
+                        latlong.LatLng(36.71117135352243, 9.844708185750278),
+                        latlong.LatLng(36.71594993296111, 9.847413200593195),
+                        latlong.LatLng(36.71764712362926, 9.848389330980098),
+
+                        
+                        // Add more points as needed
                       ],
+                      color: Colors.blue,
+                      strokeWidth: 4.0,
                     ),
-                    MarkerLayer(
-                      markers: [
-                        for (var itinerary in itineraries)
-                          for (var station in itinerary.stations)
-                            createStationMarker(station, itinerary.name),
-                      ],
+                ],
+              ),
+              MarkerLayer(
+                markers: [
+                  for (var itinerary in itineraries)
+                    for (var station in itinerary.stations)
+                      createStationMarker(station, itinerary.name),
+                ],
+              ),
+            ],
+          ),
+          if (_isContainerVisible) // Render the container only when visible
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: AnimatedContainer(
+                key: _formKey,
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                height: MediaQuery.of(context).size.height / 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xff192028),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color.fromARGB(255, 11, 11, 22),
+                      spreadRadius: 1,
+                      blurRadius: 15,
+                      offset: Offset(5, 5),
                     ),
                   ],
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                if (_isContainerVisible) // Render the container only when visible
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: AnimatedContainer(
-                      key: _formKey,
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      height: MediaQuery.of(context).size.height / 4,
-                      decoration: BoxDecoration(
-                        color: const Color(0xff192028),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color.fromARGB(255, 11, 11, 22),
-                            spreadRadius: 1,
-                            blurRadius: 15,
-                            offset: Offset(5, 5),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextButton(
+                            onPressed: () async {
+                              await _selectDateTime(context);
+                            },
+                            child: Text(
+                              _selectedDateTime != null
+                                  ? '${DateFormat('yyyy-MM-ddTHH:mm').format(_selectedDateTime!)}'
+                                  : 'Select Date and Time',
+                              style: TextStyle(
+                                fontSize: 17,
+                                color: Colors
+                                    .blue, // Customize the color as needed
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 10.0,
+                          ),
+                          Container(
+                            width: MediaQuery.of(context).size.width / 4,
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedBus,
+                              items: _busOptions.map((String bus) {
+                                return DropdownMenuItem<String>(
+                                  value: bus,
+                                  child: Text(bus),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedBus = newValue;
+                                });
+                              },
+                              decoration: InputDecoration(labelText: 'Bus'),
+                              validator: (value) {
+                                if (value == null) {
+                                  return 'Please select a bus';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            height: 10.0,
+                          ),
+                          Container(
+                            width: MediaQuery.of(context).size.width / 4,
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedItinerary,
+                              items: _itineraryOptions.map((String itinerary) {
+                                return DropdownMenuItem<String>(
+                                  value: itinerary,
+                                  child: Text(itinerary),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedItinerary = newValue;
+                                });
+                              },
+                              decoration:
+                                  InputDecoration(labelText: 'Itinerary'),
+                              validator: (value) {
+                                if (value == null) {
+                                  return 'Please select an itinerary';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                         ],
-                        borderRadius: BorderRadius.circular(30),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                TextButton(
-                                  onPressed: () async {
-                                    await _selectDateTime(context);
-                                  },
-                                  child: Text(
-                                    _selectedDateTime != null
-                                        ? '${DateFormat('yyyy-MM-ddTHH:mm').format(_selectedDateTime!)}'
-                                        : 'Select Date and Time',
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      color: Colors
-                                          .blue, // Customize the color as needed
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 10.0,
-                                ),
-                                Container(
-                                  width: MediaQuery.of(context).size.width / 4,
-                                  child: DropdownButtonFormField<String>(
-                                    value: _selectedBus,
-                                    items: _busOptions.map((String bus) {
-                                      return DropdownMenuItem<String>(
-                                        value: bus,
-                                        child: Text(bus),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        _selectedBus = newValue;
-                                      });
-                                    },
-                                    decoration:
-                                        InputDecoration(labelText: 'Bus'),
-                                    validator: (value) {
-                                      if (value == null) {
-                                        return 'Please select a bus';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 10.0,
-                                ),
-                                Container(
-                                  width: MediaQuery.of(context).size.width / 4,
-                                  child: DropdownButtonFormField<String>(
-                                    value: _selectedItinerary,
-                                    items: _itineraryOptions
-                                        .map((String itinerary) {
-                                      return DropdownMenuItem<String>(
-                                        value: itinerary,
-                                        child: Text(itinerary),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        _selectedItinerary = newValue;
-                                      });
-                                    },
-                                    decoration:
-                                        InputDecoration(labelText: 'Itinerary'),
-                                    validator: (value) {
-                                      if (value == null) {
-                                        return 'Please select an itinerary';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                              ],
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: MediaQuery.of(context).size.width / 4,
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedMarkers?.isNotEmpty ?? false
+                                  ? _selectedMarkers![0]
+                                  : null,
+                              items: _markerOptions.map((String marker) {
+                                return DropdownMenuItem<String>(
+                                  value: marker,
+                                  child: Text(marker),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedMarkers =
+                                      newValue != null ? [newValue] : null;
+                                });
+                              },
+                              decoration: InputDecoration(labelText: 'Marker'),
+                              validator: (value) {
+                                if (value == null) {
+                                  return 'Please select a marker';
+                                }
+                                return null;
+                              },
                             ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: MediaQuery.of(context).size.width / 4,
-                                  child: DropdownButtonFormField<String>(
-                                    value: _selectedMarkers?.isNotEmpty ?? false
-                                        ? _selectedMarkers![0]
-                                        : null,
-                                    items: _markerOptions.map((String marker) {
-                                      return DropdownMenuItem<String>(
-                                        value: marker,
-                                        child: Text(marker),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        _selectedMarkers = newValue != null
-                                            ? [newValue]
-                                            : null;
-                                      });
-                                    },
-                                    decoration:
-                                        InputDecoration(labelText: 'Marker'),
-                                    validator: (value) {
-                                      if (value == null) {
-                                        return 'Please select a marker';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 10,
-                                ),
-                               ElevatedButton(
-                      onPressed: () {
-                        _handleReservation();
-                       
-                      },
-                      child: Text('Make Reservation'),
-                    ),
-                              ],
-                            ),
-                          ],
-                        ),
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              _handleReservation();
+                            },
+                            child: Text('Make Reservation'),
+                          ),
+                        ],
                       ),
-                    ),
+                    ],
                   ),
-                 Positioned(
+                ),
+              ),
+            ),
+          Positioned(
             top: 0,
             left: 0,
             right: 0,
@@ -552,7 +580,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 calendarFormat: CalendarFormat.week,
                 calendarStyle: CalendarStyle(
                   todayDecoration: BoxDecoration(
-                    color: Colors.orange,
+                    color: Colors.deepPurple,
                     shape: BoxShape.circle,
                   ),
                   selectedDecoration: BoxDecoration(
@@ -589,7 +617,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     margin: const EdgeInsets.fromLTRB(4.0, 0, 4.0, 0),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: Colors.orange,
+                      color: Colors.deepPurple,
                       shape: BoxShape.circle,
                     ),
                     child: Text(
@@ -603,20 +631,19 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               ),
             ),
           ),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: FloatingActionButton(
-                      onPressed: _toggleContainerVisibility,
-                      backgroundColor: Color(0xff192028),
-                      child: Icon(Icons.add),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          }),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: FloatingActionButton(
+                onPressed: _toggleContainerVisibility,
+                backgroundColor: Color(0xff192028),
+                child: Icon(Icons.add) ,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -634,60 +661,60 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     }
   }
 
- Future<void> _selectDateTime(BuildContext context) async {
-  DateTime? pickedDate = await showDatePicker(
-    context: context,
-    initialDate: _selectedDateTime ?? DateTime.now(),
-    firstDate: DateTime.utc(2023, 1, 1),
-    lastDate: DateTime.utc(2040, 12, 31),
-  );
-
-  if (pickedDate != null) {
-    TimeOfDay? pickedTime = await showDialog(
+  Future<void> _selectDateTime(BuildContext context) async {
+    DateTime? pickedDate = await showDatePicker(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Select Time'),
-          content: TimePickerSpinner(
-            is24HourMode: true,
-            spacing: 30,
-            itemHeight: 40,
-            time: _selectedDateTime ?? DateTime.now(),
-            onTimeChange: (time) {
-              setState(() {
-                _selectedDateTime = DateTime(
-                  pickedDate.year,
-                  pickedDate.month,
-                  pickedDate.day,
-                  time.hour,
-                  time.minute,
-                );
-              });
-            },
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
+      initialDate: _selectedDateTime ?? DateTime.now(),
+      firstDate: DateTime.utc(2023, 1, 1),
+      lastDate: DateTime.utc(2040, 12, 31),
     );
 
-    if (pickedTime != null) {
-      setState(() {
-        _selectedDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-      });
+    if (pickedDate != null) {
+      TimeOfDay? pickedTime = await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Select Time'),
+            content: TimePickerSpinner(
+              is24HourMode: true,
+              spacing: 30,
+              itemHeight: 40,
+              time: _selectedDateTime ?? DateTime.now(),
+              onTimeChange: (time) {
+                setState(() {
+                  _selectedDateTime = DateTime(
+                    pickedDate.year,
+                    pickedDate.month,
+                    pickedDate.day,
+                    time.hour,
+                    time.minute,
+                  );
+                });
+              },
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (pickedTime != null) {
+        setState(() {
+          _selectedDateTime = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+        });
+      }
     }
   }
- }
 }
